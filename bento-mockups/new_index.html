@@ -9,9 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.6.0/jspdf.plugin.autotable.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://npmcdn.com/flatpickr/dist/l10n/ro.js"></script>
 <style>
 /* CSS Variables */
 :root {
@@ -95,11 +92,12 @@ body {
 
 .bento-container {
     display: grid;
-    grid-template-columns: 250px minmax(400px, 1fr) 350px;
-    grid-auto-rows: min-content;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: auto 1fr;
     gap: 1.5rem;
     max-width: 1300px;
     width: 100%;
+    /* min-height: 85vh; removing height restriction so it flows naturally */
 }
 
 .bento-card {
@@ -125,37 +123,9 @@ body {
 
 /* Layout */
 .header { grid-column: 1 / 4; grid-row: 1 / 2; flex-direction: row; justify-content: space-between; align-items: center; padding: 1.25rem 2rem;}
-.tools { grid-column: 1 / 2; grid-row: 2 / 3; height: fit-content; }
-.main-inputs { grid-column: 2 / 3; grid-row: 2 / 3; }
-.results { display: contents; }
-
-#rez-empty-msg {
-    grid-column: 3 / 4;
-    grid-row: 2 / 3;
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    text-align: center;
-    color: var(--text-muted);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 250px;
-    height: 100%;
-}
-
-.r-bottom {
-    grid-column: 2 / 4;
-    grid-row: 3 / 4;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
+.tools { grid-column: 4 / 5; grid-row: 1 / 3; }
+.main-inputs { grid-column: 1 / 3; grid-row: 2 / 3; max-height: 80vh; overflow-y: auto;}
+.results { grid-column: 3 / 4; grid-row: 2 / 3; max-height: 80vh; overflow-y: auto;}
 
 /* Custom Scrollbar for inner cards */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -229,11 +199,7 @@ h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--
 .ib {padding:12px;background:var(--surface-2);border-radius:12px;margin-bottom:8px;border:1px solid var(--border)}
 .ir {display:flex;flex-direction:row;gap:8px}
 .ir > .fg {flex:1; margin-bottom: 0;}
-.br {background:var(--surface-2);border:1px solid rgba(239,68,68,.3);color:#ef4444;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;margin-top:8px;font-family:inherit;font-weight:600;transition:all 0.2s;}
-.br:hover {background:rgba(239,68,68,.1);border-color:#ef4444;}
-.bclear {background:var(--surface-2);border:1px solid var(--border);color:var(--text-secondary);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;margin-top:8px;margin-right:8px;font-family:inherit;font-weight:600;transition:all 0.2s;}
-.bclear:hover {color:var(--text-main);background:rgba(255,255,255,0.8);border-color:var(--text-muted);}
-[data-theme="dark"] .bclear:hover {background:rgba(255,255,255,0.1);}
+.br {background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.2);color:#ef4444;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;margin-top:8px;font-family:inherit;font-weight:500;}
 .ba {background:var(--surface-2);border:1px dashed var(--accent);color:var(--accent);padding:10px;border-radius:12px;cursor:pointer;font-size:0.9rem;width:100%;margin-top:6px;text-align:center;font-weight:600;font-family:inherit;}
 .ba:hover {background:var(--accent-subtle);}
 
@@ -253,22 +219,21 @@ h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--
 .sb.show {display:block} .sb.er {background:rgba(239,68,68,.15);color:#ef4444}
 
 /* Results Area */
-.rse {display:none} .rse.show {display:contents;}
-.rse.show > * {animation: fadeIn 0.3s ease;}
+.rse {display:none} .rse.show {display:block; animation: fadeIn 0.3s;}
 @keyframes fadeIn { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);} }
 
 /* Inside results, we want a special card for the main total */
-.rca, .rbx {grid-column: 3 / 4; grid-row: 2 / 3; background:var(--accent-gradient);color:white;padding:1.5rem;border-radius:20px;text-align:center;box-shadow:0 10px 30px rgba(14,165,233,0.3); height: 100%; display: flex; flex-direction: column; justify-content: center;}
+.rca {background:var(--accent-gradient);color:white;padding:1.5rem;border-radius:20px;text-align:center;margin-bottom:1.5rem;box-shadow:0 10px 30px rgba(14,165,233,0.3);}
 .rl {font-size:0.9rem;opacity:0.9;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;font-weight:600;}
-.rv {font-size:clamp(1.5rem, 5vw, 2.5rem);font-weight:700;line-height:1.2;word-break:break-all;}
+.rv {font-size:2.5rem;font-weight:700;line-height:1.2;}
 .rsu {font-size:0.85rem;opacity:0.8;margin-top:4px}
 .rsum {display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;margin-top:16px;background:rgba(0,0,0,0.15);padding:1rem;border-radius:16px;}
 .si {text-align:left;}
 .si .sl {font-size:0.75rem;opacity:0.8;}
 .si .sv {font-size:1rem;font-weight:600;margin-top:2px;}
 
-/* Tables & Bottom blocks */
-.tw, .exb {overflow-x:auto; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: var(--radius); padding: 1.5rem; border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);}
+/* Tables */
+.tw {overflow-x:auto;}
 .tbl {width:100%;min-width:400px;border-collapse:collapse;font-size:0.8rem;}
 .tbl th, .tbl td {padding:8px 6px;text-align:right;border-bottom:1px solid var(--border)}
 .tbl th {background:var(--surface-2);color:var(--text-secondary);text-align:center;font-weight:600;font-size:0.75rem;}
@@ -306,12 +271,9 @@ h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--
 
 /* Date Clear UX */
 .date-wrap{position:relative;display:inline-block;width:100%}
-.date-wrap { position: relative; display: block; }
-.date-wrap input { padding-right: 64px; }
-.date-calendar {position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;padding:0;color:var(--text-muted);transition:transform 0.2s; z-index: 2;}
-.date-calendar:hover {transform:translateY(-50%) scale(1.1);}
-.date-clear {position:absolute;right:36px;top:50%;transform:translateY(-50%);background:var(--surface-2);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:10px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s; z-index: 2;}
-.date-wrap:hover .date-clear, .date-wrap input:focus ~ .date-clear {opacity:1;}
+.date-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--surface-2);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:12px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;}
+.date-wrap:hover .date-clear, .date-wrap input:focus + .date-clear {opacity:1;}
+.date-clear:hover{color:var(--text-main);background:var(--border);}
 
 /* Zile calculator specifics */
 .tc2 {display:flex;flex-direction:row;gap:12px}
@@ -329,13 +291,14 @@ h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--
 .co2 input {width:16px;height:16px;accent-color:var(--accent)}
 .co2 span {font-size:0.85rem;}
 
-.rbx .mnn {font-size:clamp(1.5rem, 5vw, 2.5rem);font-weight:700;word-break:break-all;}
+.rbx {background:var(--accent-gradient);border-radius:20px;padding:1.5rem;margin-top:0;text-align:center;color:white;box-shadow:0 10px 30px rgba(14,165,233,0.3);}
+.rbx .mnn {font-size:2.5rem;font-weight:700;}
 .rbx .st2 {font-size:1rem;opacity:0.9;}
 .rbx .det {display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px;background:rgba(0,0,0,0.15);padding:1rem;border-radius:16px;}
 .rbx .di {text-align:center;}
 .rbx .di .dn {font-size:1.2rem;font-weight:700;}
 .rbx .di .dt {font-size:0.75rem;opacity:0.8;margin-top:2px}
-.exb {font-size:0.85rem;line-height:1.6;color:var(--text-secondary)}
+.exb {background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:16px;font-size:0.85rem;line-height:1.6;color:var(--text-secondary)}
 .exb strong {color:var(--text-main)}
 .lb {background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:12px;margin-bottom:16px;font-size:0.85rem;color:#d97706;font-weight:500;}
 
@@ -343,17 +306,14 @@ h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--
 @media (max-width: 1000px) {
     .bento-container {
         grid-template-columns: 1fr;
-        grid-auto-rows: auto;
+        grid-template-rows: auto auto auto auto;
     }
-    .header { grid-column: 1 / 2; grid-row: 1; }
-    .tools { grid-column: 1 / 2; grid-row: 2; display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;}
+    .header { grid-column: 1 / 2; grid-row: 1 / 2; }
+    .tools { grid-column: 1 / 2; grid-row: 2 / 3; display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;}
     .tools h2 { display: none; }
     .tab { flex: 0 0 auto; margin-bottom: 0; padding: 0.8rem 1.2rem; white-space: nowrap;}
-    .main-inputs { grid-column: 1 / 2; grid-row: 3; }
-    
-    #rez-empty-msg, .rca, .rbx { grid-column: 1 / 2; grid-row: 4; }
-    .r-bottom { grid-column: 1 / 2; grid-row: 5; }
-
+    .main-inputs { grid-column: 1 / 2; grid-row: 3 / 4; max-height: none;}
+    .results { grid-column: 1 / 2; grid-row: 4 / 5; max-height: none;}
     .tc2 { flex-direction: column; }
     .rsum { grid-template-columns: repeat(2, 1fr); }
     .rbx .det { grid-template-columns: repeat(2, 1fr); }
@@ -389,8 +349,7 @@ footer { display: none; } /* Simplified for Bento layout */
     </div>
 
     <div class="bento-card main-inputs">
-        <h2 style="margin-bottom:1.5rem;">Configurează Calculul</h2>
-        <div id="form-content-wrapper">
+        <h2>Configurează Calculul</h2>
         
         <!-- DOBANDA INPUTS -->
         <div class="tc active" id="tab-dobanda">
@@ -462,55 +421,39 @@ footer { display: none; } /* Simplified for Bento layout */
             <button class="bc" style="margin-top:1.5rem" onclick="cZ()">Calculează</button>
             </div>
         </div>
-        </div>
 
-        <div id="collapse-actions" style="display:none; gap:10px; margin-top: auto; padding-top: 1.5rem;">
-            <button class="bc bs" style="margin:0; flex:1;" onclick="toggleFormCollapse(false)">Modifică Calcul</button>
-            <button class="bc" style="margin:0; flex:1;" onclick="newCalculation()">Calcul Nou</button>
-        </div>
     </div>
 
-    <div class="results">
-        <div id="rez-empty-msg">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
-            <p>Configurați calculul și apăsați "Calculează" pentru a vedea rezultatele aici.</p>
-        </div>
+    <div class="bento-card results">
+        <h2>Rezultate</h2>
+        <div style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;" id="rez-empty-msg">Selectați un modul și efectuați un calcul.</div>
         
         <!-- DOBANDA REZULTATE -->
         <div class="rse" id="dR">
             <div class="rca"><div class="rl">Dobânda legală</div><div class="rv" id="dT">0</div><div class="rsu" id="dP"></div><div class="rsum"><div class="si"><div class="sl">Sume</div><div class="sv" id="d1">-</div></div><div class="si"><div class="sl">Achitat</div><div class="sv" id="d2">-</div></div><div class="si"><div class="sl">Zile</div><div class="sv" id="d3">-</div></div><div class="si"><div class="sl">%</div><div class="sv" id="d4">-</div></div></div></div>
-            <div class="r-bottom">
-                <div class="tw"><table class="tbl"><thead><tr><th>Perioadă</th><th>Zile</th><th>Suma</th><th>BNM</th><th>Tot%</th><th>Dob</th><th>Cum</th><th>Obs</th></tr></thead><tbody id="dTB"></tbody></table></div>
-                <div style="display:flex;gap:10px;"><button class="bc bs" style="margin-top:0;flex:1" onclick="document.getElementById('dR').classList.remove('show');document.getElementById('rez-empty-msg').style.display='flex';toggleFormCollapse(false);">Ascunde</button><button class="bc" style="margin-top:0;flex:1" onclick="eDP()">Descarcă PDF</button></div>
-            </div>
+            <div class="tw"><table class="tbl"><thead><tr><th>Perioadă</th><th>Zile</th><th>Suma</th><th>BNM</th><th>Tot%</th><th>Dob</th><th>Cum</th><th>Obs</th></tr></thead><tbody id="dTB"></tbody></table></div>
+            <div style="display:flex;gap:10px;margin-top:1rem"><button class="bc bs" style="margin-top:0;flex:1" onclick="document.getElementById('dR').classList.remove('show');document.getElementById('rez-empty-msg').style.display='block';">Ascunde</button><button class="bc" style="margin-top:0;flex:1" onclick="eDP()">Descarcă PDF</button></div>
         </div>
 
         <!-- PENALITATE REZULTATE -->
         <div class="rse" id="pR">
             <div class="rca"><div class="rl">Penalitate totală</div><div class="rv" id="pT">0</div><div class="rsu" id="pPe"></div><div class="rsum"><div class="si"><div class="sl">Sume</div><div class="sv" id="p1">-</div></div><div class="si"><div class="sl">Achitat</div><div class="sv" id="p2">-</div></div><div class="si"><div class="sl">Zile</div><div class="sv" id="p3">-</div></div><div class="si"><div class="sl">%/zi</div><div class="sv" id="p4">-</div></div></div></div>
-            <div class="r-bottom">
-                <div class="lb" id="pLI" style="display:none"></div>
-                <div class="tw"><table class="tbl"><thead><tr><th>Perioadă</th><th>Zile</th><th>Suma</th><th>%/zi</th><th>Penal.</th><th>Cum</th><th>Obs</th></tr></thead><tbody id="pTB"></tbody></table></div>
-                <div style="display:flex;gap:10px;"><button class="bc bs" style="margin-top:0;flex:1" onclick="document.getElementById('pR').classList.remove('show');document.getElementById('rez-empty-msg').style.display='flex';toggleFormCollapse(false);">Ascunde</button><button class="bc" style="margin-top:0;flex:1" onclick="ePP2()">Descarcă PDF</button></div>
-            </div>
+            <div class="lb" id="pLI" style="display:none"></div>
+            <div class="tw"><table class="tbl"><thead><tr><th>Perioadă</th><th>Zile</th><th>Suma</th><th>%/zi</th><th>Penal.</th><th>Cum</th><th>Obs</th></tr></thead><tbody id="pTB"></tbody></table></div>
+            <div style="display:flex;gap:10px;margin-top:1rem"><button class="bc bs" style="margin-top:0;flex:1" onclick="document.getElementById('pR').classList.remove('show');document.getElementById('rez-empty-msg').style.display='block';">Ascunde</button><button class="bc" style="margin-top:0;flex:1" onclick="ePP2()">Descarcă PDF</button></div>
         </div>
 
         <!-- TAXA REZULTATE -->
         <div class="rse" id="tR">
             <div class="rbx"><div class="rl" style="margin-bottom:8px">Taxă de stat</div><div class="mnn" id="tTo">0</div><div class="st2" id="tIn" style="margin-top:8px"></div></div>
-            <div class="r-bottom">
-                <div class="exb" id="tEx"></div>
-                <div style="display:flex;gap:10px;"><button class="bc bs" style="margin-top:0;flex:1" onclick="document.getElementById('tR').classList.remove('show');document.getElementById('rez-empty-msg').style.display='flex';toggleFormCollapse(false);">Ascunde</button><button class="bc" style="margin-top:0;flex:1" onclick="eTaxaPDF()">Descarcă PDF</button></div>
-            </div>
+            <div class="exb" id="tEx"></div>
+            <div style="display:flex;gap:10px;margin-top:1rem"><button class="bc bs" style="margin-top:0;flex:1" onclick="document.getElementById('tR').classList.remove('show');document.getElementById('rez-empty-msg').style.display='block';">Ascunde</button><button class="bc" style="margin-top:0;flex:1" onclick="eTaxaPDF()">Descarcă PDF</button></div>
         </div>
 
         <!-- ZILE REZULTATE -->
         <div class="rse" id="zR">
-            <div class="rbx"><div class="mnn" id="zTo">0</div><div class="st2" id="zLu" style="margin-top:4px">0 lucrătoare</div><div class="rsu" id="zPe" style="margin-top:4px; opacity:0.8"></div><div class="det"><div class="di"><div class="dn" id="zA">0</div><div class="dt">Ani</div></div><div class="di"><div class="dn" id="zL">0</div><div class="dt">Luni</div></div><div class="di"><div class="dn" id="zSa">0</div><div class="dt">Săpt</div></div><div class="di"><div class="dn" id="zRe">0</div><div class="dt">Zile</div></div></div></div>
-            <div class="r-bottom">
-                <div class="exb" id="dRz" style="display:none; font-size:1rem; font-weight:600; text-align:center;"></div>
-                <div style="display:flex;gap:10px;"><button class="bc bs" style="margin-top:0;flex:1" onclick="document.getElementById('zR').classList.remove('show');document.getElementById('rez-empty-msg').style.display='flex';toggleFormCollapse(false);">Ascunde</button><button class="bc" style="margin-top:0;flex:1" onclick="eZilePDF()">Descarcă PDF</button></div>
-            </div>
+            <div class="rbx"><div class="mnn" id="zTo">0</div><div class="st2" id="zLu" style="margin-top:4px">0 lucrătoare</div><div class="rsu" id="zPe" style="margin-top:4px; opacity:0.8"></div><div class="det"><div class="di"><div class="dn" id="zA">0</div><div class="dt">Ani</div></div><div class="di"><div class="dn" id="zL">0</div><div class="dt">Luni</div></div><div class="di"><div class="dn" id="zSa">0</div><div class="dt">Săpt</div></div><div class="di"><div class="dn" id="zRe">0</div><div class="dt">Zile</div></div></div><div id="dRz" style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.2);font-size:0.9rem;font-weight:600"></div></div>
+            <div style="display:flex;gap:10px;margin-top:1rem"><button class="bc bs" style="margin-top:0;flex:1" onclick="document.getElementById('zR').classList.remove('show');document.getElementById('rez-empty-msg').style.display='block';">Ascunde</button><button class="bc" style="margin-top:0;flex:1" onclick="eZilePDF()">Descarcă PDF</button></div>
         </div>
     </div>
 </div>
@@ -586,21 +529,7 @@ footer { display: none; } /* Simplified for Bento layout */
 	function aDD(d,n){var r=new Date(d);r.setDate(r.getDate()+n);return r}
 	function dD(a,b){return Math.round((b-a)/864e5)}
 
-	function toggleFormCollapse(collapse) {
-		var wrapper = document.getElementById('form-content-wrapper');
-		var actions = document.getElementById('collapse-actions');
-		if(wrapper && actions) {
-			wrapper.style.display = collapse ? 'none' : 'block';
-			actions.style.display = collapse ? 'flex' : 'none';
-		}
-	}
-	function newCalculation() {
-		toggleFormCollapse(false);
-		document.querySelectorAll('.rse').forEach(function(r){r.classList.remove('show');});
-		document.getElementById('rez-empty-msg').style.display='flex';
-	}
-
-	function ST(t){ toggleFormCollapse(false); document.querySelectorAll('.rse').forEach(function(r){r.classList.remove('show');}); document.getElementById('rez-empty-msg').style.display='flex'; 
+	function ST(t){ document.querySelectorAll('.rse').forEach(function(r){r.classList.remove('show');}); document.getElementById('rez-empty-msg').style.display='block'; 
 	document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
 	document.querySelectorAll('.tc').forEach(function(x){x.classList.remove('active')});
 	document.querySelector('.tab[onclick*="'+t+'"]').classList.add('active');
@@ -752,8 +681,7 @@ footer { display: none; } /* Simplified for Bento layout */
 	return res;}
 
 	function shD(){
-	toggleFormCollapse(true);
-	document.getElementById('rez-empty-msg').style.display='none';
+	
 	document.getElementById('dR').classList.add('show');
 	var r=rDob;
 	document.getElementById('dT').textContent=fM(r.tot)+' '+getCurrency();
@@ -865,8 +793,7 @@ footer { display: none; } /* Simplified for Bento layout */
 	}catch(e){showErr(typeof e==='string'?e:'A apărut o eroare la calculare.')}}
 
 	function shP(){
-	toggleFormCollapse(true);
-	document.getElementById('rez-empty-msg').style.display='none';
+	
 	document.getElementById('pR').classList.add('show');
 	var r=rPen;
 	document.getElementById('pT').textContent=fM(r.tot)+' '+getCurrency();
@@ -950,7 +877,7 @@ footer { display: none; } /* Simplified for Bento layout */
 	var ta=document.querySelector('input[name="tA"]:checked').value;
 	document.getElementById('cS').style.display=ta==='p'?'block':'none';
 	document.getElementById('cN').style.display=ta==='n'?'block':'none';
-	document.getElementById('tR').classList.remove('show'); document.getElementById('rez-empty-msg').style.display='flex';
+	document.getElementById('tR').classList.remove('show'); document.getElementById('rez-empty-msg').style.display='block';
 	}
 
 	function cT(){
@@ -1061,7 +988,6 @@ footer { display: none; } /* Simplified for Bento layout */
 	document.getElementById('tTo').textContent=fM(fin)+' MDL';
 	document.getElementById('tIn').textContent=ni;
 	document.getElementById('tEx').innerHTML=ex;
-	toggleFormCollapse(true);
 	document.getElementById('tR').classList.add('show'); document.getElementById('rez-empty-msg').style.display='none';
 	}
 
@@ -1123,7 +1049,6 @@ footer { display: none; } /* Simplified for Bento layout */
 	document.getElementById('zSa').textContent=sapt;
 	document.getElementById('zRe').textContent=zRest;
 	document.getElementById('dRz').innerHTML=zm==='dz'?'<strong>Data rezultat:</strong> '+fR(d2):'';
-	toggleFormCollapse(true);
 	document.getElementById('zR').classList.add('show'); document.getElementById('rez-empty-msg').style.display='none';
 	}
 
@@ -1186,52 +1111,13 @@ footer { display: none; } /* Simplified for Bento layout */
 	  wrap.className='date-wrap';
 	  input.parentNode.insertBefore(wrap,input);
 	  wrap.appendChild(input);
-	  input.setAttribute('data-input', '');
-
-	  var calBtn=document.createElement('button');
-	  calBtn.type='button';calBtn.className='date-calendar';
-	  calBtn.title='Alege din calendar';calBtn.innerHTML='📅';
-	  calBtn.setAttribute('data-toggle', '');
-	  wrap.appendChild(calBtn);
-
 	  var btn=document.createElement('button');
 	  btn.type='button';btn.className='date-clear';
 	  btn.title='Șterge data';btn.textContent='✕';
-	  btn.setAttribute('data-clear', '');
 	  btn.addEventListener('click',function(e){
 	    e.preventDefault();input.value='';input.focus();
 	  });
 	  wrap.appendChild(btn);
-
-	  flatpickr(wrap, {
-	    wrap: true,
-	    clickOpens: false,
-	    allowInput: true,
-	    dateFormat: "d/m/Y",
-	    locale: "ro",
-	    onReady: function(dObj, dStr, fp, dayElem) {
-	      const todayBtn = document.createElement("button");
-	      todayBtn.className = "flatpickr-today-btn";
-	      todayBtn.textContent = "Azi";
-	      todayBtn.type = "button";
-	      todayBtn.style.width = "100%";
-	      todayBtn.style.padding = "8px";
-	      todayBtn.style.background = "var(--surface-2)";
-	      todayBtn.style.border = "1px solid var(--border)";
-	      todayBtn.style.borderTop = "none";
-	      todayBtn.style.cursor = "pointer";
-	      todayBtn.style.fontWeight = "600";
-	      todayBtn.onclick = function() {
-	        fp.setDate(new Date());
-	        fp.close();
-	        input.dispatchEvent(new Event('input', { bubbles: true }));
-	      };
-	      fp.calendarContainer.appendChild(todayBtn);
-	    },
-	    onChange: function() {
-	       input.dispatchEvent(new Event('input', { bubbles: true }));
-	    }
-	  });
 	}
 
 	// ── UX: Buton "Curăță" pe fiecare .ib ──────────────────
@@ -1251,10 +1137,6 @@ footer { display: none; } /* Simplified for Bento layout */
 
 	// ── Init + MutationObserver pentru itemi dinamici ───────
 	document.addEventListener('DOMContentLoaded',function(){
-	  iR(); // Inițializează ratele BNM
-	  aF(); // Adaugă un rând gol pentru dobândă
-	  aPF(); // Adaugă un rând gol pentru penalitate
-	  
 	  document.querySelectorAll('.date-input').forEach(wrapDateInput);
 	  document.querySelectorAll('.ib').forEach(addClearBtn);
 	  var observer=new MutationObserver(function(mutations){
@@ -1274,5 +1156,20 @@ footer { display: none; } /* Simplified for Bento layout */
 	  });
 	});
 	</script>
+
+<script>
+// Prevent multiple listeners if there were any issues
+document.querySelectorAll('.date-input').forEach(i => {
+    let w = document.createElement('div');
+    w.className = 'date-wrap';
+    i.parentNode.insertBefore(w, i);
+    w.appendChild(i);
+    let c = document.createElement('div');
+    c.className = 'date-clear';
+    c.innerHTML = '✕';
+    c.onclick = function() { i.value = ''; };
+    w.appendChild(c);
+});
+</script>
 </body>
 </html>
