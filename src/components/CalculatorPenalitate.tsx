@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { CurrencySelector } from './CurrencySelector';
 import { DateInput, StepHeader, CalcButton, RadioGroup, AddItemButton } from './FormComponents';
 import { parseDateRO, formatDateRO, formatMoney, addDays, diffDays } from '../utils/helpers';
+import { exportPenalitatePDF } from '../utils/pdfExport';
 
 interface DebtItem { id: number; date: string; amount: string; }
 interface PaymentItem { id: number; date: string; amount: string; }
@@ -36,6 +37,13 @@ export function CalculatorPenalitate() {
   const [displayMode, setDisplayMode] = useState('0');
   const [result, setResult] = useState<PenResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleExportPDF = async () => {
+    if (!result) return;
+    setPdfLoading(true);
+    try { await exportPenalitatePDF(result); } catch (e) { console.error(e); } finally { setPdfLoading(false); }
+  };
 
   const addDebt = () => setDebts(p => [...p, { id: Date.now(), date: '', amount: '' }]);
   const removeDebt = (id: number) => setDebts(p => p.filter(d => d.id !== id));
@@ -296,7 +304,7 @@ export function CalculatorPenalitate() {
           </div>
           <div className="flex gap-2 mt-3">
             <button onClick={() => setResult(null)} className="flex-1 py-3 border-2 border-[var(--accent)] rounded-2xl text-[var(--accent)] font-bold hover:bg-[var(--accent-subtle)] transition-all">Ascunde</button>
-            <button className="flex-1 py-3 rounded-2xl bg-[linear-gradient(135deg,#38bdf8,#3b82f6)] text-white font-bold shadow-[0_10px_20px_rgba(14,165,233,0.2)] hover:-translate-y-0.5 transition-all">Descarcă PDF</button>
+            <button onClick={handleExportPDF} disabled={pdfLoading} className="flex-1 py-3 rounded-2xl bg-[linear-gradient(135deg,#38bdf8,#3b82f6)] text-white font-bold shadow-[0_10px_20px_rgba(14,165,233,0.2)] hover:-translate-y-0.5 transition-all disabled:opacity-60">{pdfLoading ? 'Generare...' : 'Descarcă PDF'}</button>
           </div>
         </div>
       )}

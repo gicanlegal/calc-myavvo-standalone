@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StepHeader, CalcButton, RadioGroup } from './FormComponents';
 import { formatMoney } from '../utils/helpers';
+import { exportTaxaPDF } from '../utils/pdfExport';
 
 type PersonType = 'f' | 'j';
 type ActionType = 'p' | 'n';
@@ -65,6 +66,13 @@ export function CalculatorTaxa() {
   const [nonPatrimonialIdx, setNonPatrimonialIdx] = useState(0);
   const [result, setResult] = useState<{ taxa: number; info: string; explanation: string; suma: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleExportPDF = async () => {
+    if (!result) return;
+    setPdfLoading(true);
+    try { await exportTaxaPDF(result); } catch (e) { console.error(e); } finally { setPdfLoading(false); }
+  };
 
   const calculate = () => {
     setError(null);
@@ -161,7 +169,7 @@ export function CalculatorTaxa() {
           </div>
           <div className="flex gap-2 mt-3">
             <button onClick={() => setResult(null)} className="flex-1 py-3 border-2 border-[var(--accent)] rounded-2xl text-[var(--accent)] font-bold hover:bg-[var(--accent-subtle)] transition-all">Ascunde</button>
-            <button className="flex-1 py-3 rounded-2xl bg-[linear-gradient(135deg,#38bdf8,#3b82f6)] text-white font-bold shadow-[0_10px_20px_rgba(14,165,233,0.2)] hover:-translate-y-0.5 transition-all">Descarcă PDF</button>
+            <button onClick={handleExportPDF} disabled={pdfLoading} className="flex-1 py-3 rounded-2xl bg-[linear-gradient(135deg,#38bdf8,#3b82f6)] text-white font-bold shadow-[0_10px_20px_rgba(14,165,233,0.2)] hover:-translate-y-0.5 transition-all disabled:opacity-60">{pdfLoading ? 'Generare...' : 'Descarcă PDF'}</button>
           </div>
         </div>
       )}

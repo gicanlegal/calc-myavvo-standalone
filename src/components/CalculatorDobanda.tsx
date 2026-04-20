@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { CurrencySelector } from './CurrencySelector';
-import { DateInput, NumberInput, StepHeader, CalcButton, RadioGroup, AddItemButton } from './FormComponents';
+import { DateInput, StepHeader, CalcButton, RadioGroup, AddItemButton } from './FormComponents';
 import { parseDateRO, formatDateRO, formatMoney, addDays, diffDays } from '../utils/helpers';
 import { getRateForDate, getSemesterRateForDate } from '../utils/bnmRates';
+import { exportDobandaPDF } from '../utils/pdfExport';
 
 interface DebtItem {
   id: number;
@@ -53,6 +54,19 @@ export function CalculatorDobanda() {
   const [displayMode, setDisplayMode] = useState('0');
   const [result, setResult] = useState<DobandaResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleExportPDF = async () => {
+    if (!result) return;
+    setPdfLoading(true);
+    try {
+      await exportDobandaPDF(result);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   let debtCounter = debts.length;
   let payCounter = payments.length;
@@ -406,9 +420,11 @@ export function CalculatorDobanda() {
               Ascunde
             </button>
             <button
-              className="flex-1 py-3 rounded-2xl bg-[linear-gradient(135deg,#38bdf8,#3b82f6)] text-white font-bold shadow-[0_10px_20px_rgba(14,165,233,0.2)] hover:-translate-y-0.5 transition-all"
+              onClick={handleExportPDF}
+              disabled={pdfLoading}
+              className="flex-1 py-3 rounded-2xl bg-[linear-gradient(135deg,#38bdf8,#3b82f6)] text-white font-bold shadow-[0_10px_20px_rgba(14,165,233,0.2)] hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-wait"
             >
-              Descarcă PDF
+              {pdfLoading ? 'Generare...' : 'Descarcă PDF'}
             </button>
           </div>
         </div>

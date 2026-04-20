@@ -76,22 +76,26 @@ function parseHtml(html: string): BNMRate[] {
 
 let cachedRates: BNMRate[] = [];
 
-export async function initializeRates(): Promise<{ rates: BNMRate[], status: string, error?: boolean }> {
+export async function initializeRates(force = false): Promise<{ rates: BNMRate[], status: string, error?: boolean }> {
   try {
-    const s = localStorage.getItem(STORAGE_KEY);
-    if (s) {
-      const d = JSON.parse(s);
-      if (d.r && d.r.length > 0) {
-        cachedRates = d.r.map((x: any) => ({ ds: parseDateStr(x.d), r: x.r, s: x.d }))
-          .sort((a: BNMRate, b: BNMRate) => b.ds.getTime() - a.ds.getTime());
-        
-        // If older than 24 hours, fetch in background
-        if ((new Date().getTime() - new Date(d.t).getTime()) / 3600000 > 24) {
-          return await fetchAndMergeRates();
-        } else {
-          return { rates: cachedRates, status: 'OK' };
+    if (!force) {
+      const s = localStorage.getItem(STORAGE_KEY);
+      if (s) {
+        const d = JSON.parse(s);
+        if (d.r && d.r.length > 0) {
+          cachedRates = d.r.map((x: any) => ({ ds: parseDateStr(x.d), r: x.r, s: x.d }))
+            .sort((a: BNMRate, b: BNMRate) => b.ds.getTime() - a.ds.getTime());
+          
+          // If older than 24 hours, fetch in background
+          if ((new Date().getTime() - new Date(d.t).getTime()) / 3600000 > 24) {
+            return await fetchAndMergeRates();
+          } else {
+            return { rates: cachedRates, status: 'OK (cache)' };
+          }
         }
       }
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
     }
   } catch (e) {
     console.error('Error reading cached rates', e);

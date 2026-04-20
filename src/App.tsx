@@ -22,14 +22,19 @@ function App() {
   const [ratesCount, setRatesCount] = useState<number>(0);
   const [ratesStatus, setRatesStatus] = useState<string>('Se încarcă...');
   const [ratesError, setRatesError] = useState<boolean>(false);
+  const [bnmLoading, setBnmLoading] = useState(false);
 
-  useEffect(() => {
-    initializeRates().then(result => {
+  const loadRates = (force = false) => {
+    setBnmLoading(true);
+    initializeRates(force).then(result => {
       setRatesCount(result.rates.length);
       setRatesStatus(result.status);
       setRatesError(result.error || false);
+      setBnmLoading(false);
     });
-  }, []);
+  };
+
+  useEffect(() => { loadRates(); }, []);
 
   return (
     <>
@@ -42,9 +47,19 @@ function App() {
               <h1 className="text-3xl font-bold m-0 bg-[linear-gradient(135deg,#38bdf8,#3b82f6)] bg-clip-text text-transparent">CalcJuridic.</h1>
               <div className="text-sm text-[var(--text-muted)] mt-1">myAVVO &mdash; Hub Juridic Moldova</div>
             </div>
-            <div className="bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 rounded-xl text-sm font-medium text-[var(--text-main)]">
-              <div>BNM: <span className="font-bold text-[var(--accent)]">{ratesCount}</span> rate</div>
-              <div className={`text-xs mt-0.5 ${ratesError ? 'text-red-500' : 'text-[var(--text-muted)]'}`}>{ratesStatus}</div>
+            <div className="bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 rounded-xl text-sm font-medium text-[var(--text-main)] flex items-center gap-3">
+              <div>
+                <div>BNM: <span className="font-bold text-[var(--accent)]">{ratesCount}</span> rate</div>
+                <div className={`text-xs mt-0.5 ${ratesError ? 'text-red-500' : 'text-[var(--text-muted)]'}`}>{ratesStatus}</div>
+              </div>
+              <button
+                onClick={() => loadRates(true)}
+                disabled={bnmLoading}
+                title="Actualizează rate BNM"
+                className="w-8 h-8 rounded-lg border border-[var(--border)] bg-[var(--surface)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all disabled:opacity-50 disabled:cursor-wait"
+              >
+                <span className={bnmLoading ? 'animate-spin inline-block' : ''}>⟳</span>
+              </button>
             </div>
           </div>
         </div>
