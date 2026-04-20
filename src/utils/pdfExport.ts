@@ -1,50 +1,77 @@
+// pdfExport.ts — using applyPlugin approach for jspdf-autotable v5 + jspdf v4 compatibility
+import { jsPDF } from 'jspdf';
+import { applyPlugin } from 'jspdf-autotable';
 import { formatMoney, formatDateRO } from './helpers';
 
-// Attempt to load jsPDF dynamically
-async function getJsPDF() {
-  const { jsPDF } = await import('jspdf');
-  const { default: autoTable } = await import('jspdf-autotable');
-  return { jsPDF, autoTable };
+// Apply plugin once at module load time
+applyPlugin(jsPDF);
+
+// After applyPlugin, doc.autoTable becomes available
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+    lastAutoTable: { finalY: number };
+  }
 }
 
-function pdfHeader(doc: any, title: string) {
+function pdfHeader(doc: jsPDF, title: string) {
   const pageW = doc.internal.pageSize.getWidth();
-  
-  // Background gradient strip
-  doc.setFillColor(56, 189, 248);
-  doc.rect(0, 0, pageW, 28, 'F');
-  
+
+  // Blue header strip
+  doc.setFillColor(14, 165, 233);
+  doc.rect(0, 0, pageW, 26, 'F');
+
   // Brand
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(255, 255, 255);
-  doc.text('myAVVO', 10, 12);
-  
+  doc.text('myAVVO', 10, 11);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
-  doc.setTextColor(220, 240, 255);
-  doc.text('Hub Juridic Unic in Moldova', 10, 19);
+  doc.setTextColor(210, 235, 255);
+  doc.text('Hub Juridic Unic in Moldova', 10, 18);
 
-  // Title right aligned
+  // Title
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
-  doc.text(title, pageW - 10, 12, { align: 'right' });
-  
-  // Date
+  doc.text(title, pageW - 10, 11, { align: 'right' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
-  doc.setTextColor(220, 240, 255);
-  const now = new Date();
-  doc.text(`Generat: ${formatDateRO(now)}`, pageW - 10, 19, { align: 'right' });
-
-  // Footer line
-  doc.setDrawColor(56, 189, 248);
-  doc.setLineWidth(0.5);
-  doc.line(10, 32, pageW - 10, 32);
+  doc.setTextColor(210, 235, 255);
+  doc.text('Generat: ' + formatDateRO(new Date()), pageW - 10, 18, { align: 'right' });
 }
 
-export async function exportDobandaPDF(params: {
+function summaryLine(doc: jsPDF, y: number, leftTitle: string, leftValue: string, items: {label: string; value: string}[]) {
+  const pageW = doc.internal.pageSize.getWidth();
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(100, 116, 139);
+  doc.text(leftTitle, 10, y);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(14, 165, 233);
+  doc.text(leftValue, 10, y + 8);
+
+  const colW = (pageW - 70) / Math.max(items.length, 1);
+  items.forEach((item, i) => {
+    const x = 70 + i * colW;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text(item.label, x, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(15, 23, 42);
+    doc.text(item.value, x, y + 8);
+  });
+
+  return y + 18;
+}
+
+export function exportDobandaPDF(params: {
   rows: any[];
   total: number;
   totalDebts: number;
@@ -55,75 +82,45 @@ export async function exportDobandaPDF(params: {
   endDate: Date;
   currency: string;
 }) {
-  const { jsPDF } = await getJsPDF();
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  
   pdfHeader(doc, 'DOBANDA LEGALA');
 
-  // Summary block
-  let y = 38;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(15, 23, 42);
-  doc.text('DOBANDA TOTALA:', 10, y);
-  doc.setFontSize(14);
-  doc.setTextColor(56, 189, 248);
-  doc.text(`${formatMoney(params.total)} ${params.currency}`, 10, y + 7);
-
-  const pageW = doc.internal.pageSize.getWidth();
-  const summaryItems = [
-    { label: 'Perioada', value: `${formatDateRO(params.startDate)} - ${formatDateRO(params.endDate)}` },
-    { label: 'Sume scadente', value: `${formatMoney(params.totalDebts)} ${params.currency}` },
-    { label: 'Plati efectuate', value: `${formatMoney(params.totalPayments)} ${params.currency}` },
+  const y = summaryLine(doc, 32, 'DOBANDA TOTALA', formatMoney(params.total) + ' ' + params.currency, [
+    { label: 'Perioada', value: formatDateRO(params.startDate) + ' - ' + formatDateRO(params.endDate) },
+    { label: 'Sume scadente', value: formatMoney(params.totalDebts) + ' ' + params.currency },
+    { label: 'Plati efectuate', value: formatMoney(params.totalPayments) + ' ' + params.currency },
     { label: 'Zile calcul', value: String(params.totalDays) },
-    { label: 'Procent BNM +', value: `+${params.percent}%` },
-  ];
-  
-  const colW = (pageW - 60) / summaryItems.length;
-  summaryItems.forEach((item, i) => {
-    const x = 60 + i * colW;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(100, 116, 139);
-    doc.text(item.label, x, y);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(15, 23, 42);
-    doc.text(item.value, x, y + 7);
-  });
+    { label: 'Procent (art.874)', value: '+' + params.percent + '% BNM' },
+  ]);
 
-  y += 16;
-
-  // Table
-  const calcRows = params.rows
-    .filter(w => w.b !== null && w.z > 0)
-    .map(w => [
-      w.z === 1 ? formatDateRO(w.a) : `${formatDateRO(w.a)} - ${formatDateRO(w.b)}`,
+  const calcRows: string[][] = params.rows
+    .filter((w: any) => w.b !== null && w.z > 0)
+    .map((w: any) => [
+      w.z === 1 ? formatDateRO(w.a) : formatDateRO(w.a) + ' - ' + formatDateRO(w.b),
       String(w.z),
       formatMoney(w.s),
-      `${w.r.toFixed(2)}%`,
-      `${w.rt.toFixed(2)}%`,
+      (typeof w.r === 'number' ? w.r.toFixed(2) : '0') + '%',
+      (typeof w.rt === 'number' ? w.rt.toFixed(2) : '0') + '%',
       formatMoney(w.db),
       formatMoney(w.c),
     ]);
-
   calcRows.push(['TOTAL', String(params.totalDays), '', '', '', '', formatMoney(params.total)]);
 
-  (doc as any).autoTable({
+  doc.autoTable({
     startY: y,
-    head: [['Perioada', 'Zile', 'Suma', 'BNM', 'Total%', 'Dobanda', 'Cumulat']],
+    head: [['Perioada', 'Zile', 'Suma', 'BNM%', 'Total%', 'Dobanda', 'Cumulat']],
     body: calcRows,
     styles: { fontSize: 7, cellPadding: 2 },
-    headStyles: { fillColor: [56, 189, 248], textColor: 255, fontStyle: 'bold' },
+    headStyles: { fillColor: [14, 165, 233], textColor: 255, fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [240, 249, 255] },
-    foot: [],
+    footStyles: { fillColor: [220, 240, 255], fontStyle: 'bold' },
     margin: { left: 10, right: 10 },
   });
 
-  doc.save(`Dobanda-Legala-${formatDateRO(new Date()).replace(/\./g, '-')}.pdf`);
+  doc.save('Dobanda-Legala-' + formatDateRO(new Date()).replace(/\./g, '-') + '.pdf');
 }
 
-export async function exportPenalitatePDF(params: {
+export function exportPenalitatePDF(params: {
   rows: any[];
   total: number;
   totalDebts: number;
@@ -135,111 +132,77 @@ export async function exportPenalitatePDF(params: {
   currency: string;
   limitNote?: string;
 }) {
-  const { jsPDF } = await getJsPDF();
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  
   pdfHeader(doc, 'PENALITATE');
-  
-  let y = 38;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(15, 23, 42);
-  doc.text('PENALITATE TOTALA:', 10, y);
-  doc.setFontSize(14);
-  doc.setTextColor(56, 189, 248);
-  doc.text(`${formatMoney(params.total)} ${params.currency}`, 10, y + 7);
+
+  let y = summaryLine(doc, 32, 'PENALITATE TOTALA', formatMoney(params.total) + ' ' + params.currency, [
+    { label: 'Perioada', value: formatDateRO(params.startDate) + ' - ' + formatDateRO(params.endDate) },
+    { label: 'Sume scadente', value: formatMoney(params.totalDebts) + ' ' + params.currency },
+    { label: 'Plati efectuate', value: formatMoney(params.totalPayments) + ' ' + params.currency },
+    { label: 'Zile calcul', value: String(params.totalDays) },
+    { label: 'Procent/zi', value: params.percentDay + '%' },
+  ]);
 
   if (params.limitNote) {
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(7);
-    doc.setTextColor(217, 119, 6);
-    doc.text(`⚠ ${params.limitNote}`, 10, y + 14);
+    doc.setTextColor(180, 80, 0);
+    doc.text('! ' + params.limitNote, 10, y);
     y += 6;
   }
 
-  const pageW = doc.internal.pageSize.getWidth();
-  const summaryItems = [
-    { label: 'Perioada', value: `${formatDateRO(params.startDate)} - ${formatDateRO(params.endDate)}` },
-    { label: 'Sume scadente', value: `${formatMoney(params.totalDebts)} ${params.currency}` },
-    { label: 'Plati efectuate', value: `${formatMoney(params.totalPayments)} ${params.currency}` },
-    { label: 'Zile calcul', value: String(params.totalDays) },
-    { label: 'Procent/zi', value: `${params.percentDay}%` },
-  ];
-  const colW = (pageW - 60) / summaryItems.length;
-  summaryItems.forEach((item, i) => {
-    const x = 60 + i * colW;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(100, 116, 139);
-    doc.text(item.label, x, y);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(15, 23, 42);
-    doc.text(item.value, x, y + 7);
-  });
-
-  y += 16;
-
-  const calcRows = params.rows
-    .filter(w => w.z > 0)
-    .map(w => [
-      w.z === 1 ? formatDateRO(w.a) : `${formatDateRO(w.a)} - ${formatDateRO(w.b)}`,
+  const calcRows: string[][] = params.rows
+    .filter((w: any) => w.z > 0)
+    .map((w: any) => [
+      w.z === 1 ? formatDateRO(w.a) : formatDateRO(w.a) + ' - ' + formatDateRO(w.b),
       String(w.z),
       formatMoney(w.s),
-      `${w.rt}%`,
+      w.rt + '%',
       formatMoney(w.db),
       formatMoney(w.c),
     ]);
-
   calcRows.push(['TOTAL', String(params.totalDays), '', '', '', formatMoney(params.total)]);
 
-  (doc as any).autoTable({
+  doc.autoTable({
     startY: y,
     head: [['Perioada', 'Zile', 'Suma', '%/zi', 'Penalitate', 'Cumulat']],
     body: calcRows,
     styles: { fontSize: 7, cellPadding: 2 },
-    headStyles: { fillColor: [56, 189, 248], textColor: 255, fontStyle: 'bold' },
+    headStyles: { fillColor: [14, 165, 233], textColor: 255, fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [240, 249, 255] },
     margin: { left: 10, right: 10 },
   });
 
-  doc.save(`Penalitate-${formatDateRO(new Date()).replace(/\./g, '-')}.pdf`);
+  doc.save('Penalitate-' + formatDateRO(new Date()).replace(/\./g, '-') + '.pdf');
 }
 
-export async function exportTaxaPDF(params: {
+export function exportTaxaPDF(params: {
   taxa: number;
   info: string;
   explanation: string;
 }) {
-  const { jsPDF } = await getJsPDF();
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  
   pdfHeader(doc, 'TAXA DE STAT');
-  
-  let y = 40;
+
+  let y = summaryLine(doc, 32, 'TAXA DE STAT', formatMoney(params.taxa) + ' MDL', [
+    { label: 'Baza legala', value: 'Legea nr.1216/1992' },
+    { label: 'Mod calcul', value: params.info },
+  ]);
+
+  y += 5;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(15, 23, 42);
-  doc.text('TAXA DE STAT:', 10, y);
-  doc.setFontSize(18);
-  doc.setTextColor(56, 189, 248);
-  doc.text(`${formatMoney(params.taxa)} MDL`, 10, y + 10);
+  doc.text('Detalii calcul:', 10, y);
+  y += 7;
 
-  y += 22;
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(100, 116, 139);
-  doc.text(params.info, 10, y);
-
-  y += 10;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(15, 23, 42);
-  const lines = params.explanation.split('\n');
-  lines.forEach(line => {
+  doc.setFontSize(9);
+  doc.setTextColor(50, 70, 90);
+  params.explanation.split('\n').forEach(line => {
     doc.text(line, 10, y);
-    y += 6;
+    y += 7;
   });
 
-  doc.save(`Taxa-Stat-${formatDateRO(new Date()).replace(/\./g, '-')}.pdf`);
+  doc.save('Taxa-Stat-' + formatDateRO(new Date()).replace(/\./g, '-') + '.pdf');
 }

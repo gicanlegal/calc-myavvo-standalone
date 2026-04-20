@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { DatePicker } from './DatePicker';
 
 interface DateInputProps {
   id?: string;
@@ -9,52 +10,18 @@ interface DateInputProps {
   label?: string;
 }
 
-function autoFormatDate(raw: string, prev: string): string {
-  // Remove non-digits
-  const digits = raw.replace(/\D/g, '');
-  if (digits.length === 0) return '';
-  
-  let result = '';
-  if (digits.length <= 2) result = digits;
-  else if (digits.length <= 4) result = digits.slice(0, 2) + '/' + digits.slice(2);
-  else result = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4, 8);
-  
-  return result;
-}
-
-export function DateInput({ id, value, onChange, placeholder = 'zz/ll/aaaa', label }: DateInputProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = autoFormatDate(e.target.value, value);
-    onChange(formatted);
-  };
-
+export function DateInput({ value, onChange, label, placeholder }: DateInputProps) {
   return (
-    <div className="mb-4">
-      {label && <label className="block text-sm text-[var(--text-muted)] mb-1.5 font-medium">{label}</label>}
-      <div className="relative">
-        <input
-          id={id}
-          type="text"
-          value={value}
-          onChange={handleChange}
-          placeholder={placeholder}
-          inputMode="numeric"
-          maxLength={10}
-          className="w-full px-4 py-3 pr-10 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-[var(--text-main)] font-inherit text-base transition-all focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(14,165,233,0.1)]"
-        />
-        {value && (
-          <button
-            type="button"
-            onClick={() => onChange('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors w-5 h-5 flex items-center justify-center"
-          >
-            <X size={14} />
-          </button>
-        )}
-      </div>
-    </div>
+    <DatePicker
+      value={value}
+      onChange={onChange}
+      label={label}
+      placeholder={placeholder}
+      className="mb-4"
+    />
   );
 }
+
 
 interface FormGroupProps {
   label?: string;

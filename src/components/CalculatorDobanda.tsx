@@ -56,13 +56,14 @@ export function CalculatorDobanda() {
   const [error, setError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = () => {
     if (!result) return;
     setPdfLoading(true);
     try {
-      await exportDobandaPDF(result);
-    } catch (e) {
-      console.error(e);
+      exportDobandaPDF(result);
+    } catch (e: any) {
+      console.error('PDF Error:', e);
+      alert('Eroare PDF: ' + (e?.message || String(e)));
     } finally {
       setPdfLoading(false);
     }
