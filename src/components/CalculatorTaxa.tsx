@@ -19,42 +19,200 @@ const NON_PATRIMONIAL_OPTIONS = [
   { value: '250', label: 'Recunoaștere/executare/desființare hotărâre arbitrală — 250 lei' },
 ];
 
-function calcTaxa(suma: number, person: PersonType, instance: number, action: ActionType, nonPatrimonialVal: number): { taxa: number; info: string; explanation: string } {
+interface TaxaResult {
+  taxa: number;
+  info: string;
+  explanation: string; // plain text for PDF
+  explanationSteps: Step[];
+  suma: number;
+}
+
+interface Step {
+  title: string;
+  items: { text: string; bold?: boolean }[];
+}
+
+function calcTaxa(
+  suma: number,
+  person: PersonType,
+  instance: number,
+  action: ActionType,
+  nonPatrimonialVal: number,
+  nonPatrimonialLabel: string
+): Omit<TaxaResult, 'suma'> {
+  const instLabel = instance === 1
+    ? 'Fond (prima instanță)'
+    : instance === 0.85
+      ? 'Apel (85%)'
+      : instance === 0.70
+        ? 'Recurs (70%)'
+        : 'Revizuire (55%)';
+
   if (action === 'n') {
-    const taxa = nonPatrimonialVal * instance;
-    return { taxa, info: `Taxa fixă nepatrimonială × ${instance === 1 ? '100%' : `${instance * 100}%`}`, explanation: `Taxă de stat fixă: ${formatMoney(nonPatrimonialVal)} MDL × ${instance} = ${formatMoney(taxa)} MDL` };
+    const baseTaxa = nonPatrimonialVal;
+    const taxa = baseTaxa * instance;
+    const steps: Step[] = [
+      {
+        title: 'Identificarea tipului cererii:',
+        items: [
+          { text: nonPatrimonialLabel },
+          { text: `Taxă fixă stabilită: ${formatMoney(nonPatrimonialVal)} MDL` },
+        ],
+      },
+      {
+        title: 'Aplicarea coeficientului de instanță:',
+        items: [
+          { text: `Instanță: ${instLabel}`, bold: false },
+          {
+            text: `${formatMoney(nonPatrimonialVal)} MDL × ${instance} = ${formatMoney(taxa)} MDL`,
+            bold: true,
+          },
+        ],
+      },
+      {
+        title: 'Taxa de stat finală:',
+        items: [{ text: `${formatMoney(taxa)} MDL`, bold: true }],
+      },
+    ];
+
+    return {
+      taxa,
+      info: `Taxa fixă nepatrimonială × ${instance === 1 ? '100%' : `${instance * 100}%`}`,
+      explanation: `Cerere: ${nonPatrimonialLabel}\nTaxă fixă: ${formatMoney(nonPatrimonialVal)} MDL\nInstanță factor: ×${instance}\nTotal: ${formatMoney(taxa)} MDL`,
+      explanationSteps: steps,
+    };
   }
 
-  // Patrimonial - Conform Legii nr. 1216/1992
-  let rate: number;
-  let baseInfo: string;
+  // ── Patrimonial — Legea taxei de stat Nr. 213 din 31.07.2023 ──
+  const minLegal = person === 'f' ? 150 : 250;
+  const personLabel = person === 'f' ? 'fizice' : 'juridice';
+  
+  let rate: number = 0;
+  let baseFixed: number = 0;
+  let threshold: number = 0;
+  let lawRef: string = '';
+  let rangeInfo: string = '';
 
-  if (person === 'f') {
-    // Persoane fizice
-    if (suma <= 5000) { rate = 0.03; baseInfo = '3% din valoarea acțiunii'; }
-    else if (suma <= 10000) { rate = 0.025; baseInfo = '2.5% din valoarea acțiunii'; }
-    else if (suma <= 50000) { rate = 0.02; baseInfo = '2% din valoarea acțiunii'; }
-    else if (suma <= 100000) { rate = 0.015; baseInfo = '1.5% din valoarea acțiunii'; }
-    else if (suma <= 500000) { rate = 0.01; baseInfo = '1% din valoarea acțiunii'; }
-    else { rate = 0.005; baseInfo = '0.5% din valoarea acțiunii'; }
+  if (suma <= 5000) {
+    rate = 0.05; baseFixed = 0; threshold = 0;
+    lawRef = 'pct. 1.1.1';
+    rangeInfo = '≤ 5 000 lei (5%)';
+  } else if (suma <= 50000) {
+    rate = 0.04; baseFixed = 250; threshold = 5001;
+    lawRef = 'pct. 1.1.2';
+    rangeInfo = '5 001 - 50 000 lei (250 lei + 4%)';
+  } else if (suma <= 1500000) {
+    rate = 0.03; baseFixed = 2050; threshold = 50001;
+    lawRef = 'pct. 1.1.3';
+    rangeInfo = '50 001 - 1 500 000 lei (2 050 lei + 3%)';
+  } else if (suma <= 5000000) {
+    rate = 0.02; baseFixed = 45550; threshold = 1500001;
+    lawRef = 'pct. 1.1.4';
+    rangeInfo = '1 500 001 - 5 000 000 lei (45 550 lei + 2%)';
+  } else if (suma <= 10000000) {
+    rate = 0.01; baseFixed = 115550; threshold = 5000001;
+    lawRef = 'pct. 1.1.5';
+    rangeInfo = '5 000 001 - 10 000 000 lei (115 550 lei + 1%)';
   } else {
-    // Persoane juridice
-    if (suma <= 5000) { rate = 0.05; baseInfo = '5% din valoarea acțiunii'; }
-    else if (suma <= 10000) { rate = 0.04; baseInfo = '4% din valoarea acțiunii'; }
-    else if (suma <= 50000) { rate = 0.03; baseInfo = '3% din valoarea acțiunii'; }
-    else if (suma <= 100000) { rate = 0.025; baseInfo = '2.5% din valoarea acțiunii'; }
-    else if (suma <= 500000) { rate = 0.02; baseInfo = '2% din valoarea acțiunii'; }
-    else { rate = 0.015; baseInfo = '1.5% din valoarea acțiunii'; }
+    rate = 0.005; baseFixed = 165550; threshold = 10000001;
+    lawRef = 'pct. 1.1.6';
+    rangeInfo = '≥ 10 000 001 lei (165 550 lei + 0.5%)';
   }
 
-  const baseTaxa = suma * rate;
-  const taxa = baseTaxa * instance;
-  const instInfo = instance === 1 ? '(Fond 100%)' : `(instanță: ×${instance})`;
+  let baseTaxa: number;
+  if (threshold > 0) {
+    baseTaxa = baseFixed + rate * (suma - threshold);
+  } else {
+    baseTaxa = suma * rate;
+  }
+
+  // Verification of legal minimum
+  let appliedBaseTaxa = baseTaxa;
+  const isBelowMin = baseTaxa < minLegal;
+  if (isBelowMin) {
+    appliedBaseTaxa = minLegal;
+  }
+
+  const taxa = appliedBaseTaxa * instance;
+
+  // Build detailed steps
+  const steps: Step[] = [
+    {
+      title: 'Identificarea valorii acțiunii:',
+      items: [{ text: `Valoarea acțiunii este de ${formatMoney(suma)} MDL.` }],
+    }
+  ];
+
+  steps.push({
+    title: 'Determinarea pragului de calcul:',
+    items: [
+      { text: `Conform Legii taxei de stat Nr. 213 din 31.07.2023, ${lawRef}:` },
+      { text: `pentru ${rangeInfo}, taxa este calculată conform grilei stabilite.`, bold: true }
+    ],
+  });
+
+  if (threshold > 0) {
+    steps.push({
+      title: 'Calculul diferenței:',
+      items: [
+        { text: `Determinăm cât depășește pragul de ${formatMoney(threshold)} MDL:` },
+        { text: `${formatMoney(suma)} MDL − ${formatMoney(threshold)} MDL = ${formatMoney(suma - threshold)} MDL`, bold: true }
+      ],
+    });
+
+    steps.push({
+      title: `Calculul procentului de ${(rate * 100).toFixed(1)}%:`,
+      items: [
+        { text: `${(rate * 100).toFixed(1)}% × ${formatMoney(suma - threshold)} MDL = ${formatMoney(rate * (suma - threshold))} MDL`, bold: true }
+      ],
+    });
+
+    steps.push({
+      title: 'Adăugarea taxei de bază:',
+      items: [
+        { text: `Taxa fixă de ${formatMoney(baseFixed)} MDL + cota procentuală:` },
+        { text: `${formatMoney(baseFixed)} MDL + ${formatMoney(rate * (suma - threshold))} MDL = ${formatMoney(baseTaxa)} MDL`, bold: true }
+      ],
+    });
+  } else {
+    steps.push({
+      title: 'Calculul taxei de bază:',
+      items: [
+        { text: `${formatMoney(suma)} MDL × ${(rate * 100).toFixed(1)}% = ${formatMoney(baseTaxa)} MDL`, bold: true }
+      ],
+    });
+  }
+
+  if (isBelowMin) {
+    steps.push({
+      title: 'Verificarea minimului legal:',
+      items: [
+        { text: `Taxa calculată (${formatMoney(baseTaxa)} MDL) este sub minimul legal de ${formatMoney(minLegal)} MDL pentru persoane ${personLabel}.` },
+        { text: `Se aplică taxa minimă: ${formatMoney(minLegal)} MDL`, bold: true }
+      ],
+    });
+  }
+
+  if (instance !== 1) {
+    steps.push({
+      title: 'Aplicarea coeficientului de instanță:',
+      items: [
+        { text: `Instanță: ${instLabel} (coeficient: ×${instance})` },
+        { text: `${formatMoney(appliedBaseTaxa)} MDL × ${instance} = ${formatMoney(taxa)} MDL`, bold: true }
+      ],
+    });
+  }
+
+  steps.push({
+    title: 'Taxa de stat finală:',
+    items: [{ text: `${formatMoney(taxa)} MDL`, bold: true }],
+  });
 
   return {
     taxa,
-    info: `${baseInfo} ${instInfo}`,
-    explanation: `Valoare: ${formatMoney(suma)} MDL\nRată: ${baseInfo}\nTaxă bază: ${formatMoney(baseTaxa)} MDL\nInstanță factor: ×${instance}\nTotal: ${formatMoney(taxa)} MDL`
+    info: `${rangeInfo} ${instance !== 1 ? `× ${instance}` : ''}`,
+    explanation: `Valoare: ${formatMoney(suma)} MDL\nPrag: ${rangeInfo}\nTaxă bază: ${formatMoney(baseTaxa)} MDL\nMinim legal: ${minLegal} MDL\nInstanță factor: ×${instance}\nTotal: ${formatMoney(taxa)} MDL`,
+    explanationSteps: steps,
   };
 }
 
@@ -64,14 +222,14 @@ export function CalculatorTaxa() {
   const [actionType, setActionType] = useState<ActionType>('p');
   const [suma, setSuma] = useState('');
   const [nonPatrimonialIdx, setNonPatrimonialIdx] = useState(0);
-  const [result, setResult] = useState<{ taxa: number; info: string; explanation: string; suma: number } | null>(null);
+  const [result, setResult] = useState<TaxaResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = () => {
     if (!result) return;
     setPdfLoading(true);
-    try { await exportTaxaPDF(result); } catch (e) { console.error(e); } finally { setPdfLoading(false); }
+    try { exportTaxaPDF(result); } catch (e) { console.error(e); } finally { setPdfLoading(false); }
   };
 
   const calculate = () => {
@@ -81,11 +239,12 @@ export function CalculatorTaxa() {
       if (actionType === 'p') {
         const s = parseFloat(suma);
         if (!s || s <= 0) { setError('Introduceți suma acțiunii!'); return; }
-        const res = calcTaxa(s, personType, instanceNum, actionType, 0);
+        const res = calcTaxa(s, personType, instanceNum, actionType, 0, '');
         setResult({ ...res, suma: s });
       } else {
-        const npVal = parseInt(NON_PATRIMONIAL_OPTIONS[nonPatrimonialIdx].value);
-        const res = calcTaxa(0, personType, instanceNum, actionType, npVal);
+        const npOpt = NON_PATRIMONIAL_OPTIONS[nonPatrimonialIdx];
+        const npVal = parseInt(npOpt.value);
+        const res = calcTaxa(0, personType, instanceNum, actionType, npVal, npOpt.label);
         setResult({ ...res, suma: 0 });
       }
     } catch {
@@ -158,16 +317,37 @@ export function CalculatorTaxa() {
 
       {result && (
         <div className="mt-6">
+          {/* Result card */}
           <div className="rounded-2xl p-6 bg-[linear-gradient(135deg,#38bdf8,#3b82f6)] text-white text-center shadow-[0_10px_30px_rgba(14,165,233,0.3)] mb-4">
             <div className="text-xs uppercase tracking-widest font-semibold opacity-90 mb-2">Taxă de stat</div>
             <div className="text-4xl font-bold break-all">{formatMoney(result.taxa)} MDL</div>
             <div className="text-sm opacity-80 mt-2">{result.info}</div>
           </div>
-          <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl p-6 border border-[var(--glass-border)] shadow-[var(--glass-shadow)]">
-            <h3 className="font-semibold text-[var(--text-main)] mb-3">Detalii calcul</h3>
-            <pre className="text-sm text-[var(--text-muted)] leading-relaxed whitespace-pre-line">{result.explanation}</pre>
+
+          {/* Detailed explanation */}
+          <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl p-5 border border-[var(--glass-border)] shadow-[var(--glass-shadow)] mb-3">
+            <h3 className="font-bold text-[var(--text-main)] mb-4 text-base">Detalii calcul</h3>
+            <div className="space-y-4 text-sm">
+              {result?.explanationSteps?.map((step, si) => (
+                <div key={si}>
+                  <div className="font-bold text-[var(--text-main)] mb-1.5">{step.title}</div>
+                  <ul className="space-y-1 pl-1">
+                    {step.items?.map((item, ii) => (
+                      <li key={ii} className="flex items-start gap-2 text-[var(--text-muted)]">
+                        <span className="mt-0.5 text-[var(--accent)] select-none">•</span>
+                        {item.bold
+                          ? <span className="font-bold text-[var(--text-main)]">{item.text}</span>
+                          : <span>{item.text}</span>
+                        }
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex gap-2 mt-3">
+
+          <div className="flex gap-2">
             <button onClick={() => setResult(null)} className="flex-1 py-3 border-2 border-[var(--accent)] rounded-2xl text-[var(--accent)] font-bold hover:bg-[var(--accent-subtle)] transition-all">Ascunde</button>
             <button onClick={handleExportPDF} disabled={pdfLoading} className="flex-1 py-3 rounded-2xl bg-[linear-gradient(135deg,#38bdf8,#3b82f6)] text-white font-bold shadow-[0_10px_20px_rgba(14,165,233,0.2)] hover:-translate-y-0.5 transition-all disabled:opacity-60">{pdfLoading ? 'Generare...' : 'Descarcă PDF'}</button>
           </div>

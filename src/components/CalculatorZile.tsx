@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DateInput, StepHeader, CalcButton } from './FormComponents';
 import { parseDateRO, formatDateRO, addDays, diffDays } from '../utils/helpers';
-import { format } from 'date-fns';
+import { exportZilePDF } from '../utils/pdfExport';
 
 type Mode = 'dd' | 'dz';
 
@@ -197,7 +197,10 @@ export function CalculatorZile() {
               ))}
             </div>
           </div>
-          <button onClick={() => setResult(null)} className="w-full py-3 border-2 border-[var(--accent)] rounded-2xl text-[var(--accent)] font-bold hover:bg-[var(--accent-subtle)] transition-all">Ascunde</button>
+          <div className="flex gap-2">
+            <button onClick={() => setResult(null)} className="flex-1 py-3 border-2 border-[var(--accent)] rounded-2xl text-[var(--accent)] font-bold hover:bg-[var(--accent-subtle)] transition-all">Ascunde</button>
+            <button onClick={() => exportZilePDF(result)} className="flex-1 py-3 rounded-2xl bg-[linear-gradient(135deg,#38bdf8,#3b82f6)] text-white font-bold shadow-[0_10px_20px_rgba(14,165,233,0.2)] hover:-translate-y-0.5 transition-all">Descarcă PDF</button>
+          </div>
         </div>
       )}
     </div>
