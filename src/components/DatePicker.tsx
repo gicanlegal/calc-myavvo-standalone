@@ -174,7 +174,7 @@ export function DatePicker({ value, onChange, label, placeholder = 'zz/ll/aaaa',
 
       {/* Calendar Popup */}
       {open && (
-        <div className="absolute top-[calc(100%+6px)] left-0 z-[200] bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] p-3 min-w-[260px] backdrop-blur-xl">
+        <div className="absolute top-[calc(100%+6px)] left-0 z-[200] bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] p-3 min-w-[260px]">
           {/* Month navigation */}
           <div className="flex items-center justify-between mb-3">
             <button

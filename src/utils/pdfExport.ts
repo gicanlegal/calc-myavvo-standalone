@@ -2,6 +2,7 @@
 import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 import { formatMoney, formatDateRO } from './helpers';
+import { ROBOTO_REGULAR, ROBOTO_BOLD } from './fonts';
 
 // Apply plugin once at module load time
 applyPlugin(jsPDF);
@@ -17,7 +18,7 @@ declare module 'jspdf' {
 // Design Palette
 const PALETTE = {
   navy: [26, 54, 93] as [number, number, number],
-  teal: [56, 178, 172] as [number, number, number],
+  teal: [17, 165, 234] as [number, number, number],
   gray: [113, 128, 150] as [number, number, number],
   darkGray: [45, 55, 72] as [number, number, number],
   bgLight: [247, 250, 252] as [number, number, number],
@@ -26,15 +27,24 @@ const PALETTE = {
 };
 
 /**
- * Utility to remove diacritics for standard Helvetica font compatibility
+ * Utility to sanitize text (now preserved for custom font compatibility)
  */
 function sanitize(s: string): string {
   if (!s) return '';
-  return s
-    .replace(/[ăâ]/g, 'a').replace(/[ĂÂ]/g, 'A')
-    .replace(/î/g, 'i').replace(/Î/g, 'I')
-    .replace(/[șş]/g, 's').replace(/[ȘŞ]/g, 'S')
-    .replace(/[țţ]/g, 't').replace(/[ȚŢ]/g, 'T');
+  return s;
+}
+
+/**
+ * Common PDF initialization with custom fonts
+ */
+function createDoc() {
+  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  doc.addFileToVFS('Roboto-Regular.ttf', ROBOTO_REGULAR);
+  doc.addFileToVFS('Roboto-Bold.ttf', ROBOTO_BOLD);
+  doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+  doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
+  doc.setFont('Roboto', 'normal');
+  return doc;
 }
 
 /**
@@ -44,7 +54,7 @@ function pdfHeader(doc: jsPDF, logoB64?: string, qrB64?: string) {
   const pageW = doc.internal.pageSize.getWidth();
   
   // Brand "myAVVO"
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('Roboto', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(PALETTE.teal[0], PALETTE.teal[1], PALETTE.teal[2]);
   doc.text('my', 10, 14);
@@ -53,12 +63,12 @@ function pdfHeader(doc: jsPDF, logoB64?: string, qrB64?: string) {
   doc.text('AVVO', 10 + myW, 14);
 
   // Subtitles
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('Roboto', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(PALETTE.navy[0], PALETTE.navy[1], PALETTE.navy[2]);
   doc.text('HUB Juridic Unic in Moldova', 10, 22);
   
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('Roboto', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(74, 85, 104);
   doc.text('Toate solutiile juridice intr-un singur loc', 10, 27);
@@ -100,12 +110,12 @@ function pdfFooter(doc: jsPDF, dateStr: string) {
     doc.line(ML, H - 20, MR, H - 20);
 
     // Left info
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(PALETTE.navy[0], PALETTE.navy[1], PALETTE.navy[2]);
     doc.text('myAVVO \u2014 Hub Juridic Moldova', ML, H - 15.5);
     
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(6);
     doc.setTextColor(PALETTE.gray[0], PALETTE.gray[1], PALETTE.gray[2]);
     doc.text('Solutii juridice complete pentru business si persoane fizice', ML, H - 12);
@@ -138,12 +148,12 @@ function pdfStats(doc: jsPDF, stats: {l: string, v: string}[], y: number) {
     doc.setLineWidth(0.3);
     doc.roundedRect(bx, y, bW, 16, 2, 2, 'FD');
     
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(6.5);
     doc.setTextColor(PALETTE.gray[0], PALETTE.gray[1], PALETTE.gray[2]);
     doc.text(sanitize(st.l), bx + bW / 2, y + 5.5, { align: 'center' });
     
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(8.5);
     doc.setTextColor(PALETTE.navy[0], PALETTE.navy[1], PALETTE.navy[2]);
     doc.text(st.v, bx + bW / 2, y + 12.5, { align: 'center' });
@@ -198,7 +208,7 @@ export async function exportDobandaPDF(params: {
   currency: string;
 }) {
   const { logoB64, qrB64 } = await loadBrandingImages();
-  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const doc = createDoc();
   const ML = 14;
   const UW = doc.internal.pageSize.getWidth() - 28;
   const dt = getDateStr();
@@ -207,7 +217,7 @@ export async function exportDobandaPDF(params: {
 
   // Intro
   const intro = sanitize(`Dobanda legala constituie \u2014 ${formatMoney(params.total)} ${params.currency} si a fost calculata pentru perioada ${formatDateRO(params.startDate)} - ${formatDateRO(params.endDate)}, conform art. 874 Cod Civil RM, rata BNM + ${params.percent}% (persoane ${params.percent === 5 ? 'fizice' : 'juridice'}).`);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('Roboto', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(PALETTE.darkGray[0], PALETTE.darkGray[1], PALETTE.darkGray[2]);
   const iL = doc.splitTextToSize(intro, UW);
@@ -225,14 +235,14 @@ export async function exportDobandaPDF(params: {
   doc.roundedRect(boxX, y, boxW, boxH, 3, 3, 'S');
   
   doc.setFontSize(8);
-  doc.setTextColor(44, 122, 122);
+  doc.setTextColor(17, 165, 234);
   doc.text(sanitize('Dobanda legala de intarziere'), doc.internal.pageSize.getWidth() / 2, y + 6, { align: 'center' });
   doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('Roboto', 'bold');
   doc.setTextColor(PALETTE.navy[0], PALETTE.navy[1], PALETTE.navy[2]);
   doc.text(`${formatMoney(params.total)} ${params.currency}`, doc.internal.pageSize.getWidth() / 2, y + 15, { align: 'center' });
   doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('Roboto', 'normal');
   doc.setTextColor(74, 85, 104);
   doc.text(`${formatDateRO(params.startDate)} \u2014 ${formatDateRO(params.endDate)}`, doc.internal.pageSize.getWidth() / 2, y + 21, { align: 'center' });
   y += boxH + 4;
@@ -309,7 +319,7 @@ export async function exportDobandaPDF(params: {
   doc.line(ML + UW / 2, fy, ML + UW, fy);
 
   const sy = fy + 9;
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('Roboto', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(PALETTE.darkGray[0], PALETTE.darkGray[1], PALETTE.darkGray[2]);
   doc.text('Calcul efectuat de: ___________________________', ML, sy);
@@ -340,7 +350,7 @@ export async function exportPenalitatePDF(params: {
   limitNote?: string;
 }) {
   const { logoB64, qrB64 } = await loadBrandingImages();
-  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const doc = createDoc();
   const ML = 14;
   const UW = doc.internal.pageSize.getWidth() - 28;
   const dt = getDateStr();
@@ -348,7 +358,7 @@ export async function exportPenalitatePDF(params: {
   let y = pdfHeader(doc, logoB64, qrB64);
 
   const intro = sanitize(`Penalitatea contractuala constituie \u2014 ${formatMoney(params.total)} ${params.currency} si a fost calculata pentru perioada ${formatDateRO(params.startDate)} - ${formatDateRO(params.endDate)}, in baza clauzei penale de ${params.percentDay}% pe zi din suma datoriei neachitate.` + (params.limitNote ? ` Nota: ${params.limitNote}.` : ''));
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('Roboto', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(PALETTE.darkGray[0], PALETTE.darkGray[1], PALETTE.darkGray[2]);
   const iL = doc.splitTextToSize(intro, UW);
@@ -365,14 +375,14 @@ export async function exportPenalitatePDF(params: {
   doc.roundedRect(boxX, y, boxW, boxH, 3, 3, 'S');
   
   doc.setFontSize(8);
-  doc.setTextColor(44, 122, 122);
+  doc.setTextColor(17, 165, 234);
   doc.text(sanitize('Penalitate contractuala totala'), doc.internal.pageSize.getWidth() / 2, y + 6, { align: 'center' });
   doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('Roboto', 'bold');
   doc.setTextColor(PALETTE.navy[0], PALETTE.navy[1], PALETTE.navy[2]);
   doc.text(`${formatMoney(params.total)} ${params.currency}`, doc.internal.pageSize.getWidth() / 2, y + 15, { align: 'center' });
   doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('Roboto', 'normal');
   doc.setTextColor(74, 85, 104);
   doc.text(`${formatDateRO(params.startDate)} \u2014 ${formatDateRO(params.endDate)}`, doc.internal.pageSize.getWidth() / 2, y + 21, { align: 'center' });
   y += boxH + 4;
@@ -448,7 +458,7 @@ export async function exportPenalitatePDF(params: {
   doc.line(ML + UW / 2, fy, ML + UW, fy);
 
   const sy = fy + 9;
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('Roboto', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(PALETTE.darkGray[0], PALETTE.darkGray[1], PALETTE.darkGray[2]);
   doc.text('Calcul efectuat de: ___________________________', ML, sy);
@@ -473,7 +483,7 @@ export async function exportTaxaPDF(params: {
   explanationSteps?: { title: string; items: { text: string; bold?: boolean }[] }[];
 }) {
   const { logoB64, qrB64 } = await loadBrandingImages();
-  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const doc = createDoc();
   const ML = 14;
   const UW = doc.internal.pageSize.getWidth() - 28;
   const dt = getDateStr();
@@ -481,7 +491,7 @@ export async function exportTaxaPDF(params: {
   let y = pdfHeader(doc, logoB64, qrB64);
 
   const intro = sanitize(`Taxa de stat constituie \u2014 ${formatMoney(params.taxa)} MDL si a fost calculata conform Legii taxei de stat Nr. 213 din 31.07.2023.`);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('Roboto', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(PALETTE.darkGray[0], PALETTE.darkGray[1], PALETTE.darkGray[2]);
   const iL = doc.splitTextToSize(intro, UW);
@@ -498,14 +508,14 @@ export async function exportTaxaPDF(params: {
   doc.roundedRect(boxX, y, boxW, boxH, 3, 3, 'S');
   
   doc.setFontSize(8);
-  doc.setTextColor(44, 122, 122);
+  doc.setTextColor(17, 165, 234);
   doc.text(sanitize('Taxa de stat finala'), doc.internal.pageSize.getWidth() / 2, y + 6, { align: 'center' });
   doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('Roboto', 'bold');
   doc.setTextColor(PALETTE.navy[0], PALETTE.navy[1], PALETTE.navy[2]);
   doc.text(`${formatMoney(params.taxa)} MDL`, doc.internal.pageSize.getWidth() / 2, y + 15, { align: 'center' });
   doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('Roboto', 'normal');
   doc.setTextColor(74, 85, 104);
   doc.text(sanitize(params.info), doc.internal.pageSize.getWidth() / 2, y + 21, { align: 'center' });
   y += boxH + 4;
@@ -522,7 +532,7 @@ export async function exportTaxaPDF(params: {
     params.explanationSteps.forEach(step => {
       if (y > 260) { doc.addPage(); pdfHeader(doc, logoB64, qrB64); y = 46; }
 
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(PALETTE.navy[0], PALETTE.navy[1], PALETTE.navy[2]);
       doc.text(sanitize(step.title), ML, y);
@@ -531,7 +541,7 @@ export async function exportTaxaPDF(params: {
       step.items.forEach(item => {
         if (y > 275) { doc.addPage(); pdfHeader(doc, logoB64, qrB64); y = 46; }
         
-        doc.setFont('helvetica', item.bold ? 'bold' : 'normal');
+        doc.setFont('Roboto', item.bold ? 'bold' : 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(PALETTE.darkGray[0], PALETTE.darkGray[1], PALETTE.darkGray[2]);
         
@@ -566,7 +576,7 @@ export async function exportZilePDF(params: {
   period: string;
 }) {
   const { logoB64, qrB64 } = await loadBrandingImages();
-  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const doc = createDoc();
   const ML = 14;
   const UW = doc.internal.pageSize.getWidth() - 28;
   const dt = getDateStr();
@@ -574,7 +584,7 @@ export async function exportZilePDF(params: {
   let y = pdfHeader(doc, logoB64, qrB64);
 
   const intro = sanitize(`Termenul calculat constituie \u2014 ${params.totalDays} zile (dintre care ${params.workDays} lucratoare), pentru perioada ${params.period}.`);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('Roboto', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(PALETTE.darkGray[0], PALETTE.darkGray[1], PALETTE.darkGray[2]);
   const iL = doc.splitTextToSize(intro, UW);
@@ -591,14 +601,14 @@ export async function exportZilePDF(params: {
   doc.roundedRect(boxX, y, boxW, boxH, 3, 3, 'S');
   
   doc.setFontSize(8);
-  doc.setTextColor(44, 122, 122);
+  doc.setTextColor(17, 165, 234);
   doc.text(sanitize('Termen calendaristic total'), doc.internal.pageSize.getWidth() / 2, y + 6, { align: 'center' });
   doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('Roboto', 'bold');
   doc.setTextColor(PALETTE.navy[0], PALETTE.navy[1], PALETTE.navy[2]);
   doc.text(`${params.totalDays} zile`, doc.internal.pageSize.getWidth() / 2, y + 15, { align: 'center' });
   doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('Roboto', 'normal');
   doc.setTextColor(74, 85, 104);
   doc.text(sanitize(params.period), doc.internal.pageSize.getWidth() / 2, y + 21, { align: 'center' });
   y += boxH + 4;
