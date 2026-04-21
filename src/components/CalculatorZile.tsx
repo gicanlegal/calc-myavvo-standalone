@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { DateInput, CalcButton } from './FormComponents';
 import { parseDateRO, formatDateRO, addDays, diffDays } from '../utils/helpers';
 import { exportZilePDF } from '../utils/pdfExport';
@@ -45,12 +45,7 @@ export function CalculatorZile() {
   const [includeLast, setIncludeLast] = useState(true);
   const [result, setResult] = useState<ZileResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [todayStr, setTodayStr] = useState('');
-
-  useEffect(() => {
-    const today = new Date();
-    setTodayStr(formatDateRO(today));
-  }, []);
+  const [todayStr] = useState(() => formatDateRO(new Date()));
 
   const calculate = () => {
     setError(null);

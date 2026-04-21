@@ -7,12 +7,51 @@ import { ROBOTO_REGULAR, ROBOTO_BOLD } from './fonts';
 // Apply plugin once at module load time
 applyPlugin(jsPDF);
 
+interface AutoTableCellData {
+  section: string;
+  row: { index: number };
+  cell: { styles: Record<string, unknown> };
+  pageNumber?: number;
+}
+
+interface AutoTablePageData {
+  pageNumber: number;
+}
+
+interface AutoTableOptions {
+  startY?: number;
+  head?: (string | number)[][];
+  body?: (string | number)[][];
+  theme?: string;
+  styles?: Record<string, unknown>;
+  headStyles?: Record<string, unknown>;
+  alternateRowStyles?: Record<string, unknown>;
+  columnStyles?: Record<string, unknown>;
+  margin?: Record<string, number>;
+  didParseCell?: (data: AutoTableCellData) => void;
+  didDrawPage?: (data: AutoTablePageData) => void;
+}
+
 // After applyPlugin, doc.autoTable becomes available
 declare module 'jspdf' {
   interface jsPDF {
-    autoTable: (options: any) => jsPDF;
+    autoTable: (options: AutoTableOptions) => jsPDF;
     lastAutoTable: { finalY: number };
   }
+}
+
+interface CalcRowData {
+  a: Date;
+  b: Date | null;
+  z: number;
+  s: number;
+  r?: number;
+  rt: number;
+  db: number;
+  c: number;
+  o: string;
+  iS?: boolean;
+  iP?: boolean;
 }
 
 // Design Palette
@@ -99,7 +138,7 @@ function pdfFooter(doc: jsPDF, dateStr: string) {
   const ML = 14;
   const MR = doc.internal.pageSize.getWidth() - 14;
   const H = doc.internal.pageSize.getHeight();
-  const totalPages = (doc.internal as any).getNumberOfPages?.() || 1;
+  const totalPages = (doc as jsPDF & { getNumberOfPages?: () => number }).getNumberOfPages?.() ?? doc.internal.pages.length - 1;
 
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
@@ -173,7 +212,7 @@ async function loadBrandingImages(): Promise<{logoB64?: string, qrB64?: string}>
         reader.onloadend = () => resolve(reader.result as string);
         reader.readAsDataURL(blob);
       });
-    } catch (e) {
+    } catch {
       console.warn('Failed to load image:', url);
       return '';
     }
@@ -197,7 +236,7 @@ function getDateStr() {
  * DOBANDA LEGALA EXPORT
  */
 export async function exportDobandaPDF(params: {
-  rows: any[];
+  rows: CalcRowData[];
   total: number;
   totalDebts: number;
   totalPayments: number;
@@ -257,7 +296,7 @@ export async function exportDobandaPDF(params: {
   y += 20;
 
   // Table
-  const rows = params.rows.map((w: any) => {
+  const rows = params.rows.map((w) => {
     const p = w.b ? (w.z === 1 ? formatDateRO(w.a) : formatDateRO(w.a) + '-' + formatDateRO(w.b)) : formatDateRO(w.a);
     return [
       p,
@@ -286,7 +325,7 @@ export async function exportDobandaPDF(params: {
       5: { halign: 'right', cellWidth: 23 }, 6: { halign: 'right', cellWidth: 23 }, 7: { cellWidth: 46 }
     },
     margin: { left: ML, right: 14, top: 46, bottom: 22 },
-    didParseCell: (data: any) => {
+    didParseCell: (data: AutoTableCellData) => {
       if (data.section === 'body') {
         const rowIndex = data.row.index;
         const isTotal = rowIndex === rows.length - 1;
@@ -305,7 +344,7 @@ export async function exportDobandaPDF(params: {
         }
       }
     },
-    didDrawPage: (data: any) => {
+    didDrawPage: (data: AutoTablePageData) => {
       if (data.pageNumber > 1) pdfHeader(doc, logoB64, qrB64);
     }
   });
@@ -338,7 +377,7 @@ export async function exportDobandaPDF(params: {
  * PENALITATE EXPORT
  */
 export async function exportPenalitatePDF(params: {
-  rows: any[];
+  rows: CalcRowData[];
   total: number;
   totalDebts: number;
   totalPayments: number;
@@ -395,7 +434,7 @@ export async function exportPenalitatePDF(params: {
   ], y);
   y += 20;
 
-  const rows = params.rows.map((w: any) => {
+  const rows = params.rows.map((w) => {
     const p = w.b ? (w.z === 1 ? formatDateRO(w.a) : formatDateRO(w.a) + '-' + formatDateRO(w.b)) : formatDateRO(w.a);
     return [
       p,
@@ -423,7 +462,7 @@ export async function exportPenalitatePDF(params: {
       5: { halign: 'right', cellWidth: 26 }, 6: { cellWidth: 45 }
     },
     margin: { left: ML, right: 14, top: 46, bottom: 22 },
-    didParseCell: (data: any) => {
+    didParseCell: (data: AutoTableCellData) => {
       if (data.section === 'body') {
         const rowIndex = data.row.index;
         const isTotal = rowIndex === rows.length - 1;
@@ -445,7 +484,7 @@ export async function exportPenalitatePDF(params: {
         }
       }
     },
-    didDrawPage: (data: any) => {
+    didDrawPage: (data: AutoTablePageData) => {
       if (data.pageNumber > 1) pdfHeader(doc, logoB64, qrB64);
     }
   });
@@ -641,7 +680,7 @@ export async function exportZilePDF(params: {
     alternateRowStyles: { fillColor: PALETTE.bgLight },
     columnStyles: { 0: { cellWidth: 80, fontStyle: 'bold' }, 1: { cellWidth: 102 } },
     margin: { left: ML, right: 14, top: 46, bottom: 22 },
-    didDrawPage: (data: any) => {
+    didDrawPage: (data: AutoTablePageData) => {
       if (data.pageNumber > 1) pdfHeader(doc, logoB64, qrB64);
     }
   });

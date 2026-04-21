@@ -61,9 +61,9 @@ export function CalculatorDobanda() {
     setPdfLoading(true);
     try {
       exportDobandaPDF(result);
-    } catch (e: any) {
-      console.error('PDF Error:', e);
-      alert('Eroare PDF: ' + (e?.message || String(e)));
+    } catch (err: unknown) {
+      console.error('PDF Error:', err);
+      alert('Eroare PDF: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setPdfLoading(false);
     }
@@ -186,7 +186,7 @@ export function CalculatorDobanda() {
       T.forEach(x => { zt += x.z; });
 
       setResult({ rows: T, total: c, totalDebts: tF, totalPayments: tP, totalDays: zt, percent: Y, startDate: ps, endDate: D, currency });
-    } catch (e) {
+    } catch {
       setError('A apărut o eroare la calculare. Verificați datele introduse.');
     }
   };

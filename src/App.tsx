@@ -34,7 +34,14 @@ function App() {
     });
   };
 
-  useEffect(() => { loadRates(); }, []);
+  useEffect(() => {
+    initializeRates().then(result => {
+      setRatesCount(result.rates.length);
+      setRatesStatus(result.status);
+      setRatesError(result.error || false);
+      setBnmLoading(false);
+    });
+  }, []);
 
   return (
     <>

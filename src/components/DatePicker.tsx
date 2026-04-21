@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MONTHS_RO = [
@@ -9,7 +9,7 @@ const DAYS_RO = ['Lu', 'Ma', 'Mi', 'Jo', 'Vi', 'Sâ', 'Du'];
 
 function parseInput(val: string): Date | null {
   // Accept dd/mm/yyyy or dd.mm.yyyy
-  const m = val.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{4})$/);
+  const m = val.match(/^(\d{1,2})[/.](\d{1,2})[/.](\d{4})$/);
   if (!m) return null;
   const d = new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
   if (isNaN(d.getTime())) return null;
@@ -53,26 +53,23 @@ interface DatePickerProps {
 export function DatePicker({ value, onChange, label, placeholder = 'zz/ll/aaaa', className = '' }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [inputVal, setInputVal] = useState(value);
-  const [viewYear, setViewYear] = useState(() => new Date().getFullYear());
-  const [viewMonth, setViewMonth] = useState(() => new Date().getMonth());
+  const [syncedValue, setSyncedValue] = useState(value);
+  const [viewYear, setViewYear] = useState(() => {
+    const d = parseInput(value);
+    return d ? d.getFullYear() : new Date().getFullYear();
+  });
+  const [viewMonth, setViewMonth] = useState(() => {
+    const d = parseInput(value);
+    return d ? d.getMonth() : new Date().getMonth();
+  });
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Sync external value → local input
-  useEffect(() => {
+  // Sync external value → local input (adjusting state during render)
+  if (syncedValue !== value) {
+    setSyncedValue(value);
     setInputVal(value);
-  }, [value]);
-
-  // Sync viewYear/Month when calendar opens or when value changes
-  useEffect(() => {
-    if (value) {
-      const d = parseInput(value);
-      if (d) {
-        setViewYear(d.getFullYear());
-        setViewMonth(d.getMonth());
-      }
-    }
-  }, [open, value]);
+  }
 
   // Close on outside click
   useEffect(() => {
@@ -163,7 +160,13 @@ export function DatePicker({ value, onChange, label, placeholder = 'zz/ll/aaaa',
           )}
           <button
             type="button"
-            onClick={() => setOpen(o => !o)}
+            onClick={() => {
+              if (!open && value) {
+                const d = parseInput(value);
+                if (d) { setViewYear(d.getFullYear()); setViewMonth(d.getMonth()); }
+              }
+              setOpen(o => !o);
+            }}
             className={`w-7 h-7 flex items-center justify-center rounded-lg border transition-all ${open ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)]'}`}
             tabIndex={-1}
           >

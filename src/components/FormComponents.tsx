@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import React from 'react';
 import { DatePicker } from './DatePicker';
 
 interface DateInputProps {
@@ -25,7 +25,7 @@ export function DateInput({ value, onChange, label, placeholder }: DateInputProp
 interface FormGroupProps {
   label?: string;
   hint?: string;
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
 }
 

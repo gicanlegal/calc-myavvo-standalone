@@ -56,7 +56,7 @@ function parseHtml(html: string): BNMRate[] {
         const c = w[j].querySelectorAll('td');
         if (c.length >= 3) {
           const dm = c[0].textContent?.match(/(\d{2})\.(\d{2})\.(\d{4})/);
-          const rm = c[2].textContent?.match(/([\d,\.]+)/);
+          const rm = c[2].textContent?.match(/([\d,.]+)/);
           if (dm && rm) {
             const v = parseFloat(rm[1].replace(',', '.'));
             if (v > 0 && v < 50) {
@@ -83,7 +83,7 @@ export async function initializeRates(force = false): Promise<{ rates: BNMRate[]
       if (s) {
         const d = JSON.parse(s);
         if (d.r && d.r.length > 0) {
-          cachedRates = d.r.map((x: any) => ({ ds: parseDateStr(x.d), r: x.r, s: x.d }))
+          cachedRates = d.r.map((x: { d: string; r: number }) => ({ ds: parseDateStr(x.d), r: x.r, s: x.d }))
             .sort((a: BNMRate, b: BNMRate) => b.ds.getTime() - a.ds.getTime());
           
           // If older than 24 hours, fetch in background
@@ -130,7 +130,7 @@ async function fetchAndMergeRates(): Promise<{ rates: BNMRate[], status: string,
     } else {
       return { rates: cachedRates, status: 'Parse error', error: true };
     }
-  } catch (err) {
+  } catch {
     return { rates: cachedRates, status: 'Date locale', error: true };
   }
 }
