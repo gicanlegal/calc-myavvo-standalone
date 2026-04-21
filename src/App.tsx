@@ -22,7 +22,7 @@ function App() {
   const [ratesCount, setRatesCount] = useState<number>(0);
   const [ratesStatus, setRatesStatus] = useState<string>('Se încarcă...');
   const [ratesError, setRatesError] = useState<boolean>(false);
-  const [bnmLoading, setBnmLoading] = useState(false);
+  const [bnmLoading, setBnmLoading] = useState(true);
 
   const loadRates = (force = false) => {
     setBnmLoading(true);
