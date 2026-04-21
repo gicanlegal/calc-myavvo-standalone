@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { CurrencySelector } from './CurrencySelector';
 import { DateInput, StepHeader, CalcButton, RadioGroup, AddItemButton } from './FormComponents';

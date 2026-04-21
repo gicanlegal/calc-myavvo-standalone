@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { CurrencySelector } from './CurrencySelector';
 import { DateInput, StepHeader, CalcButton, RadioGroup, AddItemButton } from './FormComponents';
@@ -68,9 +68,6 @@ export function CalculatorDobanda() {
       setPdfLoading(false);
     }
   };
-
-  let debtCounter = debts.length;
-  let payCounter = payments.length;
 
   const addDebt = () => setDebts(prev => [...prev, { id: Date.now(), date: '', amount: '' }]);
   const removeDebt = (id: number) => setDebts(prev => prev.filter(d => d.id !== id));

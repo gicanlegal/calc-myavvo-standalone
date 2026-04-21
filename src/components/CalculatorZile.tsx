@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { DateInput, StepHeader, CalcButton } from './FormComponents';
+import { useState, useEffect } from 'react';
+import { DateInput, CalcButton } from './FormComponents';
 import { parseDateRO, formatDateRO, addDays, diffDays } from '../utils/helpers';
 import { exportZilePDF } from '../utils/pdfExport';
 

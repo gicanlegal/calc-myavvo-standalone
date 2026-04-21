@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { StepHeader, CalcButton, RadioGroup } from './FormComponents';
 import { formatMoney } from '../utils/helpers';
 import { exportTaxaPDF } from '../utils/pdfExport';

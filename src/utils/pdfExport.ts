@@ -50,7 +50,7 @@ function createDoc() {
 /**
  * Renders the professional header with branding
  */
-function pdfHeader(doc: jsPDF, logoB64?: string, qrB64?: string) {
+function pdfHeader(doc: jsPDF, _logoB64?: string, qrB64?: string) {
   const pageW = doc.internal.pageSize.getWidth();
   
   // Brand "myAVVO"
@@ -99,7 +99,7 @@ function pdfFooter(doc: jsPDF, dateStr: string) {
   const ML = 14;
   const MR = doc.internal.pageSize.getWidth() - 14;
   const H = doc.internal.pageSize.getHeight();
-  const totalPages = doc.internal.getNumberOfPages();
+  const totalPages = (doc.internal as any).getNumberOfPages?.() || 1;
 
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);

@@ -1,5 +1,4 @@
-import React from 'react';
-import { X } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { DatePicker } from './DatePicker';
 
 interface DateInputProps {
@@ -26,7 +25,7 @@ export function DateInput({ value, onChange, label, placeholder }: DateInputProp
 interface FormGroupProps {
   label?: string;
   hint?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }
 
