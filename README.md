@@ -1,73 +1,46 @@
-# React + TypeScript + Vite
+# calc-myavvo-standalone
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicație React + TypeScript + Vite.
 
-Currently, two official plugins are available:
+## Comenzi principale
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run test
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Sistem de memorie pentru agenți
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Proiectul include un sistem de memorie persistentă în repo, pentru a permite agenților să păstreze context util între sesiuni.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Locații importante
+- `vault/` - knowledge base persistentă
+- `memory/hooks/` - hook-uri pentru Claude Code
+- `memory/compile.py` - compilează logurile de sesiune în pagini wiki
+- `memory/query.py` - caută în memorie din terminal
+- `memory/lint.py` - verifică sănătatea memoriei
+- `docs/memory.md` - documentație de utilizare și integrare
+
+### Comenzi memorie
+
+```bash
+npm run memory:lint
+npm run memory:compile
+python3 memory/query.py "implementare memorie"
 ```
+
+### Ordine recomandată pentru agenți
+1. Citește `vault/index.md`
+2. Citește `vault/CLAUDE.md`
+3. Citește `vault/wiki/index.md`
+4. Consultă paginile relevante din `vault/wiki/`
+
+## Integrare hook-uri Claude Code
+
+Hook-urile sunt versionate în proiect și pot fi conectate din `~/.claude/settings.json`.
+
+Vezi:
+- `docs/memory.md`
+- `claude-code-memory-guide.md`
