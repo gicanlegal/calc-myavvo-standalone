@@ -57,8 +57,8 @@ function App() {
             <div className="bg-white/80 dark:bg-black/20 border border-slate-200 dark:border-white/10 px-4 py-2.5 rounded-xl text-sm font-medium text-[var(--text-main)] flex items-center gap-3 shadow-sm transition-all hover:shadow-md">
               <div>
                 <div>BNM: <span className="font-bold text-[var(--accent)]">{ratesCount}</span> rate</div>
-                <div className={`text-xs mt-0.5 ${ratesError ? 'text-red-500' : 'text-[var(--text-muted)]'}`}>
-                  {!ratesError && ratesCount > 0 ? 'Actualizat' : ratesStatus}
+                <div className={`text-xs mt-0.5 ${ratesError ? 'text-rose-500' : ratesCount > 0 ? 'text-emerald-500' : 'text-[var(--text-muted)]'}`}>
+                  {ratesError ? 'Offline' : ratesCount > 0 ? 'Actualizat' : ratesStatus}
                 </div>
               </div>
               <button
