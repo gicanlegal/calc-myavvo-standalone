@@ -40,10 +40,32 @@ export function CalculatorPenalitate() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [numeExecutor, setNumeExecutor] = useState('');
 
+  const expandDetailed = (T: CalcRow[]): CalcRow[] => {
+    const res: CalcRow[] = [];
+    T.forEach(w => {
+      if (!w.b || w.z === 0) {
+        res.push(w);
+      } else {
+        const dd = w.s * (w.rt / 100);
+        const cB = w.c - w.db;
+        let cur = new Date(w.a.getTime());
+        const end = new Date(w.b.getTime());
+        let rc = cB;
+        while (cur <= end) {
+          rc += dd;
+          res.push({ a: new Date(cur.getTime()), b: new Date(cur.getTime()), z: 1, s: w.s, rt: w.rt, db: dd, c: rc, o: '' });
+          cur = addDays(cur, 1);
+        }
+      }
+    });
+    return res;
+  };
+
   const handleExportPDF = async () => {
     if (!result) return;
     setPdfLoading(true);
-    try { await exportPenalitatePDF({ ...result, numeExecutor }); } catch (e) { console.error(e); } finally { setPdfLoading(false); }
+    const displayRows = displayMode === '1' ? expandDetailed(result.rows) : result.rows;
+    try { await exportPenalitatePDF({ ...result, rows: displayRows, numeExecutor }); } catch (e) { console.error(e); } finally { setPdfLoading(false); }
   };
 
   const addDebt = () => setDebts(p => [...p, { id: Date.now(), date: '', amount: '' }]);
@@ -255,7 +277,7 @@ export function CalculatorPenalitate() {
       </div>
 
       <div className="mb-5">
-        <StepHeader step="8" title="Nume executor" />
+        <StepHeader step="8" title="Calcul efectuat de:" />
         <input
           type="text"
           value={numeExecutor}
@@ -281,39 +303,44 @@ export function CalculatorPenalitate() {
               <div><div className="text-xs opacity-80">%/zi</div><div className="font-semibold">{result.percentDay}%</div></div>
             </div>
           </div>
-          <div className="overflow-x-auto bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl p-6 border border-[var(--glass-border)] shadow-[var(--glass-shadow)]">
-            <table className="w-full min-w-[400px] border-collapse text-sm">
-              <thead>
-                <tr>{['Perioadă', 'Zile', 'Suma', '%/zi', 'Penal.', 'Cum', 'Obs'].map(h => (
-                  <th key={h} className="px-2 py-2 bg-[var(--surface-2)] text-[var(--text-muted)] text-center font-semibold text-xs">{h}</th>
-                ))}</tr>
-              </thead>
-              <tbody>
-                {result.rows.map((w, i) => {
-                  const period = w.b ? (w.z === 1 ? formatDateRO(w.a) : `${formatDateRO(w.a)}-${formatDateRO(w.b)}`) : formatDateRO(w.a);
-                  const rc = w.iS ? 'text-amber-600' : w.iP ? 'text-emerald-600' : w.isLimit ? 'text-red-500' : '';
-                  return (
-                    <tr key={i} className={rc}>
-                      <td className="px-2 py-2 border-b border-[var(--border)] text-left text-xs">{period}</td>
-                      <td className="px-2 py-2 border-b border-[var(--border)] text-center">{w.z || '-'}</td>
-                      <td className="px-2 py-2 border-b border-[var(--border)] text-right">{formatMoney(w.s)}</td>
-                      <td className="px-2 py-2 border-b border-[var(--border)] text-center">{w.rt}%</td>
-                      <td className="px-2 py-2 border-b border-[var(--border)] text-right">{w.db > 0 ? formatMoney(w.db) : '-'}</td>
-                      <td className="px-2 py-2 border-b border-[var(--border)] text-right">{formatMoney(w.c)}</td>
-                      <td className="px-2 py-2 border-b border-[var(--border)] text-xs text-[var(--text-muted)]">{w.o}</td>
+          {(() => {
+            const displayRows = displayMode === '1' ? expandDetailed(result.rows) : result.rows;
+            return (
+              <div className="overflow-x-auto bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl p-6 border border-[var(--glass-border)] shadow-[var(--glass-shadow)]">
+                <table className="w-full min-w-[400px] border-collapse text-sm">
+                  <thead>
+                    <tr>{['Perioadă', 'Zile', 'Suma', '%/zi', 'Penal.', 'Cum', 'Obs'].map(h => (
+                      <th key={h} className="px-2 py-2 bg-[var(--surface-2)] text-[var(--text-muted)] text-center font-semibold text-xs">{h}</th>
+                    ))}</tr>
+                  </thead>
+                  <tbody>
+                    {displayRows.map((w, i) => {
+                      const period = w.b ? (w.z === 1 ? formatDateRO(w.a) : `${formatDateRO(w.a)}-${formatDateRO(w.b)}`) : formatDateRO(w.a);
+                      const rc = w.iS ? 'text-amber-600' : w.iP ? 'text-emerald-600' : w.isLimit ? 'text-red-500' : '';
+                      return (
+                        <tr key={i} className={rc}>
+                          <td className="px-2 py-2 border-b border-[var(--border)] text-left text-xs">{period}</td>
+                          <td className="px-2 py-2 border-b border-[var(--border)] text-center">{w.z || '-'}</td>
+                          <td className="px-2 py-2 border-b border-[var(--border)] text-right">{formatMoney(w.s)}</td>
+                          <td className="px-2 py-2 border-b border-[var(--border)] text-center">{w.rt}%</td>
+                          <td className="px-2 py-2 border-b border-[var(--border)] text-right">{w.db > 0 ? formatMoney(w.db) : '-'}</td>
+                          <td className="px-2 py-2 border-b border-[var(--border)] text-right">{formatMoney(w.c)}</td>
+                          <td className="px-2 py-2 border-b border-[var(--border)] text-xs text-[var(--text-muted)]">{w.o}</td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="bg-[var(--surface-2)] font-bold">
+                      <td className="px-2 py-2 text-left">TOTAL</td>
+                      <td className="px-2 py-2 text-center">{result.totalDays}</td>
+                      <td colSpan={3} />
+                      <td className="px-2 py-2 text-right">{formatMoney(result.total)}</td>
+                      <td />
                     </tr>
-                  );
-                })}
-                <tr className="bg-[var(--surface-2)] font-bold">
-                  <td className="px-2 py-2 text-left">TOTAL</td>
-                  <td className="px-2 py-2 text-center">{result.totalDays}</td>
-                  <td colSpan={3} />
-                  <td className="px-2 py-2 text-right">{formatMoney(result.total)}</td>
-                  <td />
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
           <div className="flex gap-2 mt-3">
             <button onClick={() => setResult(null)} className="flex-1 py-3 border-2 border-[var(--accent)] rounded-2xl text-[var(--accent)] font-bold hover:bg-[var(--accent-subtle)] transition-all">Ascunde</button>
             <button onClick={handleExportPDF} disabled={pdfLoading} className="flex-1 py-3 rounded-2xl bg-[linear-gradient(135deg,#38bdf8,#3b82f6)] text-white font-bold shadow-[0_10px_20px_rgba(14,165,233,0.2)] hover:-translate-y-0.5 transition-all disabled:opacity-60">{pdfLoading ? 'Generare...' : 'Descarcă PDF'}</button>

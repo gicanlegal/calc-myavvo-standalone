@@ -61,7 +61,7 @@ export function CalculatorDobanda() {
     if (!result) return;
     setPdfLoading(true);
     try {
-      await exportDobandaPDF({ ...result, numeExecutor });
+      await exportDobandaPDF({ ...result, rows: displayRows, numeExecutor });
     } catch (err: unknown) {
       console.error('PDF Error:', err);
       alert('Eroare PDF: ' + (err instanceof Error ? err.message : String(err)));
@@ -355,7 +355,7 @@ export function CalculatorDobanda() {
       </div>
 
       <div className="mb-5">
-        <StepHeader step="7" title="Nume executor" />
+        <StepHeader step="7" title="Calcul efectuat de:" />
         <input
           type="text"
           value={numeExecutor}
