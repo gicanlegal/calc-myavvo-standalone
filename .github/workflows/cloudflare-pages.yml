@@ -69,6 +69,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: calc-myavvo
+          projectName: calc-myavvo-standalone
           directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
