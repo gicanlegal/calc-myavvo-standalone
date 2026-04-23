@@ -50,6 +50,24 @@ Implementare: `ThemeToggle.tsx`
 
 Theming-ul este controlat prin CSS custom properties (ex. `--glass-bg`, `--text-main`, `--text-muted`, `--accent`, `--border`, `--surface-2`, `--radius`, `--shadow`, `--glass-border`, `--glass-shadow`). Valorile se schimbă în funcție de `[data-theme="dark"]`.
 
+## Variabile CSS — atenție la transparență
+
+**Toate** variabilele de suprafață din temă folosesc `rgba()` cu canal alpha:
+- `--surface` = `rgba(255,255,255,0.6)` / `rgba(15,23,42,0.7)`
+- `--input-bg` = `rgba(255,255,255,0.5)` / `rgba(0,0,0,0.2)`
+- `--surface-2`, `--glass-bg`, `--border` — toate transparente
+
+**Consecință:** orice element poziționat absolut (dropdown, tooltip, modal) care folosește aceste variabile va fi transparent și va lăsa să se vadă conținutul din spate.
+
+**Pattern corect pentru elemente floating:** folosit `--dropdown-bg: #ffffff` (light) / `#0f172a` (dark) — variabilă solidă dedicată, definită în `src/index.css`. De replicat ori de câte ori apare un dropdown sau overlay similar.
+
+## Mod Detaliat (Dobândă + Penalitate)
+
+`displayMode` state controlează afișarea tabelului: `'0'` = Grupat, `'1'` = Detaliat (zi cu zi).
+
+- **Dobândă:** `expandDetailed()` există la `CalculatorDobanda.tsx:195`. `displayRows` se calculează la `line:216`. PDF primește `displayRows` (nu `result.rows`).
+- **Penalitate:** `expandDetailed()` adăugat în sesiunea 2026-04-23. Formula per zi: `w.s * (w.rt / 100)` (fără împărțire la 365, spre deosebire de dobândă). PDF și tabel UI folosesc ambele `displayRows`.
+
 ## Câmp Nume executor
 
 Prezent în: `CalculatorDobanda.tsx` (Pasul 7) și `CalculatorPenalitate.tsx` (Pasul 8), plasat imediat înainte de butonul "Calculează".
