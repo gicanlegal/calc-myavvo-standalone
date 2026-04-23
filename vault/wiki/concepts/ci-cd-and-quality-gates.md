@@ -58,6 +58,13 @@ Starea raportată în proiect:
 ## Observații
 - în `.github/workflows/` există și alte workflow-uri, deci acest fișier nu este singurul workflow din repo
 - pentru onboarding agenți, `cloudflare-pages.yml` este un workflow-cheie deoarece leagă validarea de deploy
+- `projectName` din workflow trebuie să corespundă exact cu numele proiectului din Cloudflare Dashboard
+- permisiunea `deployments: write` este necesară pentru `cloudflare/pages-action@v1` ca să poată crea GitHub Deployment
+
+## Probleme întâlnite și rezolvate
+1. **Project not found (404)** — `projectName` era `calc-myavvo` în loc de `calc-myavvo-standalone`. Fix: actualizat în workflow.
+2. **Resource not accessible by integration (403)** — lipsea `deployments: write` în `permissions`. Fix: adăugat.
+3. **Branch nepushuit** — commit-urile cu modificări erau doar în local. Fix: `git push origin bento-final`.
 
 ## Conexiuni
 - [[testing-strategy]]
