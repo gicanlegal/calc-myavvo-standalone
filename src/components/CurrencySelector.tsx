@@ -35,7 +35,7 @@ export function CurrencySelector({ value, onChange }: CurrencySelectorProps) {
         <span className={`text-xs text-[var(--text-muted)] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
       {open && (
-        <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-[var(--input-bg)] border border-[var(--border)] rounded-xl shadow-[var(--shadow)] z-50 max-h-64 overflow-y-auto">
+        <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-[var(--dropdown-bg)] border border-[var(--border)] rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
           {CURRENCIES.map(c => (
             <div
               key={c.code}
