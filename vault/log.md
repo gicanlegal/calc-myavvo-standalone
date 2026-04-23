@@ -13,3 +13,5 @@
 - [2026-04-23] UI: bloc BNM din header — "Actualizat" afișat în verde (emerald-500), "Offline" în roșu (rose-500) la eroare. Fișier: `src/App.tsx:60`.
 - [2026-04-23] Repo: adăugat `playwright-report/`, `test-results/`, `.playwright-mcp/` în `.gitignore`. Scos `test-results/.last-run.json` din tracking.
 - [2026-04-23 11:45] Deploy: fixat workflow Cloudflare Pages — `projectName` corectat la `calc-myavvo-standalone`, adăugat `deployments: write`, push-uit branch `bento-final`. Deploy reușit, 19/19 teste passed.
+- [2026-04-23 12:30] Wiki cleanup: șters artefact test `wiki/daily/session_2026-04-23_00-48-20.md` și `concepts/session-2026-04-23-00-48-20.md`. Adăugate pagini noi: `branch-strategy` și `ui-ux-decisions`.
+- [2026-04-23] Feature: adăugat câmp "Nume executor" în CalculatorDobanda și CalculatorPenalitate (pas 7/8 în formular). Câmpul apare în PDF ca "Calcul efectuat de: [nume]". Fișiere: `src/components/CalculatorDobanda.tsx`, `src/components/CalculatorPenalitate.tsx`, `src/utils/pdfExport.ts`.

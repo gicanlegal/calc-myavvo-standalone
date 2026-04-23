@@ -38,11 +38,12 @@ export function CalculatorPenalitate() {
   const [result, setResult] = useState<PenResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [numeExecutor, setNumeExecutor] = useState('');
 
   const handleExportPDF = async () => {
     if (!result) return;
     setPdfLoading(true);
-    try { await exportPenalitatePDF(result); } catch (e) { console.error(e); } finally { setPdfLoading(false); }
+    try { await exportPenalitatePDF({ ...result, numeExecutor }); } catch (e) { console.error(e); } finally { setPdfLoading(false); }
   };
 
   const addDebt = () => setDebts(p => [...p, { id: Date.now(), date: '', amount: '' }]);
@@ -251,6 +252,17 @@ export function CalculatorPenalitate() {
           <div className="text-sm font-medium text-[var(--text-main)] mb-2">Mod afișare rezultat:</div>
           <RadioGroup name="modP" value={displayMode} onChange={setDisplayMode} options={[{ value: '0', label: 'Grupat', sublabel: 'Pe perioade' }, { value: '1', label: 'Detaliat', sublabel: 'Zi cu zi' }]} />
         </div>
+      </div>
+
+      <div className="mb-5">
+        <StepHeader step="8" title="Nume executor" />
+        <input
+          type="text"
+          value={numeExecutor}
+          onChange={e => setNumeExecutor(e.target.value)}
+          placeholder="Nume, Prenume"
+          className="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-[var(--text-main)] text-base transition-all focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(14,165,233,0.1)]"
+        />
       </div>
 
       <CalcButton onClick={calculate}>Calculează Penalitatea</CalcButton>

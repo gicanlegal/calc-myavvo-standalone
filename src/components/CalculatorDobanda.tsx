@@ -55,12 +55,13 @@ export function CalculatorDobanda() {
   const [result, setResult] = useState<DobandaResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [numeExecutor, setNumeExecutor] = useState('');
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!result) return;
     setPdfLoading(true);
     try {
-      exportDobandaPDF(result);
+      await exportDobandaPDF({ ...result, numeExecutor });
     } catch (err: unknown) {
       console.error('PDF Error:', err);
       alert('Eroare PDF: ' + (err instanceof Error ? err.message : String(err)));
@@ -351,6 +352,17 @@ export function CalculatorDobanda() {
             ]}
           />
         </div>
+      </div>
+
+      <div className="mb-5">
+        <StepHeader step="7" title="Nume executor" />
+        <input
+          type="text"
+          value={numeExecutor}
+          onChange={e => setNumeExecutor(e.target.value)}
+          placeholder="Nume, Prenume"
+          className="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-[var(--text-main)] text-base transition-all focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(14,165,233,0.1)]"
+        />
       </div>
 
       <CalcButton onClick={calculate}>Calculează Dobânda</CalcButton>

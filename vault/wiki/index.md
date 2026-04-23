@@ -12,10 +12,9 @@ Acesta este indexul principal al knowledge base-ului procesat.
 - [[concepts/architecture]]
 - [[concepts/testing-strategy]]
 - [[concepts/ci-cd-and-quality-gates]]
+- [[concepts/branch-strategy]]
+- [[concepts/ui-ux-decisions]]
 
 ## Reguli
 - Adaugă aici linkuri către pagini importante.
 - Pentru subiecte recurente, creează fișiere dedicate în `concepts/`.
-
-## Pagini compilate automat
-- [[concepts/session-2026-04-23-00-48-20]]

@@ -245,6 +245,7 @@ export async function exportDobandaPDF(params: {
   startDate: Date;
   endDate: Date;
   currency: string;
+  numeExecutor?: string;
 }) {
   const { logoB64, qrB64 } = await loadBrandingImages();
   const doc = createDoc();
@@ -361,7 +362,10 @@ export async function exportDobandaPDF(params: {
   doc.setFont('Roboto', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(PALETTE.darkGray[0], PALETTE.darkGray[1], PALETTE.darkGray[2]);
-  doc.text('Calcul efectuat de: ___________________________', ML, sy);
+  const executorLabel = params.numeExecutor
+    ? 'Calcul efectuat de: ' + params.numeExecutor
+    : 'Calcul efectuat de: ___________________________';
+  doc.text(executorLabel, ML, sy);
   doc.setDrawColor(PALETTE.navy[0], PALETTE.navy[1], PALETTE.navy[2]);
   doc.setLineWidth(0.4);
   doc.line(ML, sy + 10, ML + 60, sy + 10);
@@ -387,6 +391,7 @@ export async function exportPenalitatePDF(params: {
   endDate: Date;
   currency: string;
   limitNote?: string;
+  numeExecutor?: string;
 }) {
   const { logoB64, qrB64 } = await loadBrandingImages();
   const doc = createDoc();
@@ -500,7 +505,10 @@ export async function exportPenalitatePDF(params: {
   doc.setFont('Roboto', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(PALETTE.darkGray[0], PALETTE.darkGray[1], PALETTE.darkGray[2]);
-  doc.text('Calcul efectuat de: ___________________________', ML, sy);
+  const executorLabelP = params.numeExecutor
+    ? 'Calcul efectuat de: ' + params.numeExecutor
+    : 'Calcul efectuat de: ___________________________';
+  doc.text(executorLabelP, ML, sy);
   doc.setDrawColor(PALETTE.navy[0], PALETTE.navy[1], PALETTE.navy[2]);
   doc.setLineWidth(0.4);
   doc.line(ML, sy + 10, ML + 60, sy + 10);
